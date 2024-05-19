@@ -9,13 +9,17 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ConsoleTestApp", "src\Conso
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WebServer", "src\WebServer\WebServer.csproj", "{B82AF9A9-D1EB-4A5D-A91D-ABEF64A5F5A7}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projectFiles", "projectFiles", "{E0BFA130-CA27-4D45-B8BB-D8042EC11CF6}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+		.editorconfig = .editorconfig
+		global.json = global.json
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{553D0D9D-C34E-4BF4-A81A-D57EA21B6009}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -27,8 +31,12 @@ Global
 		{B82AF9A9-D1EB-4A5D-A91D-ABEF64A5F5A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{B82AF9A9-D1EB-4A5D-A91D-ABEF64A5F5A7}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{553D0D9D-C34E-4BF4-A81A-D57EA21B6009} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
 		{B82AF9A9-D1EB-4A5D-A91D-ABEF64A5F5A7} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
+		{E0BFA130-CA27-4D45-B8BB-D8042EC11CF6} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
 	EndGlobalSection
 EndGlobal
