@@ -4,7 +4,34 @@
     ViewData["Title"] = "Home page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+<h1>Welcome to Pi Web Server</h1>
+
+<table>
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Value</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>Free Disk Space</td>
+            <td>@Model.FreeDiskSpace</td>
+        </tr>
+        <tr>
+            <td>Free Memory</td>
+            <td>@Model.FreeMemory</td>
+        </tr>
+        <tr>
+            <td>CPU Usage</td>
+            <td>@Model.CpuUsage</td>
+        </tr>
+        <tr>
+            <td>CPU Temperature</td>
+            <td>@Model.CpuTemperature</td>
+        </tr>
+        <!-- Add more rows as needed -->
+    </tbody>
+</table>
+
+<!-- Add buttons if needed -->
