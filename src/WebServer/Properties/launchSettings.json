@@ -6,7 +6,6 @@
       "dotnetRunMessages": true,
       "launchBrowser": false,
       "applicationUrl": "http://0.0.0.0:5013",
-      "launchUrl": "http://withro.local:5013",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
