@@ -1,0 +1,8 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Publish WiThrottleServer to ThrottleX" type="DotNetPublishAndUpload" factoryName="Publish to custom server">
+    <riderPublish configuration="Debug" platform="Any CPU" runtime="linux-arm64" server_id="879ce1dd-300f-4e53-a5be-89424dfe03ee" serverName="ThrottleX" target_framework="net8.0" uuid_high="-6756156193049261811" uuid_low="-8938520884404710235" />
+    <method v="2">
+      <option name="Build Solution" enabled="true" />
+    </method>
+  </configuration>
+</component>
