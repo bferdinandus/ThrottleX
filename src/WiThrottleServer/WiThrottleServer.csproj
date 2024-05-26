@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Makaretu.Dns.Multicast.New" Version="0.31.0" />
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="8.0.0"/>
   </ItemGroup>
 </Project>
