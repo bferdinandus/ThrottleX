@@ -14,17 +14,23 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projectFiles", "projectFile
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EF36F24A-097A-4EEA-A400-C95DD50F195F}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ThrottleX.Core", "src\ThrottleX.Core\ThrottleX.Core.csproj", "{EF8DC1AA-3116-4203-A149-BC8CA4220909}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EF8DC1AA-3116-4203-A149-BC8CA4220909}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EF8DC1AA-3116-4203-A149-BC8CA4220909}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EF8DC1AA-3116-4203-A149-BC8CA4220909}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EF8DC1AA-3116-4203-A149-BC8CA4220909}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
-		{E0BFA130-CA27-4D45-B8BB-D8042EC11CF6} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
+		{EF8DC1AA-3116-4203-A149-BC8CA4220909} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
 	EndGlobalSection
 EndGlobal
