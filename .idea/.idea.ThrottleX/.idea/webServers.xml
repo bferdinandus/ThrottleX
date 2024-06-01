@@ -2,7 +2,7 @@
 <project version="4">
   <component name="WebServers">
     <option name="servers">
-      <webServer id="879ce1dd-300f-4e53-a5be-89424dfe03ee" name="ThrottleX" url="">
+      <webServer id="879ce1dd-300f-4e53-a5be-89424dfe03ee" name="ThrottleX" url="http://throttle-x.local:5000/">
         <fileTransfer rootFolder="/home/ben/ThrottleX" accessType="SFTP" host="throttle-x.local" port="22" sshConfigId="8184b098-41c8-43c6-8f67-4892c21e4d9c" sshConfig="ben@throttle-x.local:22 password">
           <advancedOptions>
             <advancedOptions dataProtectionLevel="Private" keepAliveTimeout="0" passiveMode="true" shareSSLContext="true" />
