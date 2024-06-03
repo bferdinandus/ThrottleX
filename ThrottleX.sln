@@ -7,9 +7,10 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{E6C11790-D27
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projectFiles", "projectFiles", "{E0BFA130-CA27-4D45-B8BB-D8042EC11CF6}"
 	ProjectSection(SolutionItems) = preProject
-		README.md = README.md
 		.editorconfig = .editorconfig
 		global.json = global.json
+		README.md = README.md
+		.gitignore = .gitignore
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EF36F24A-097A-4EEA-A400-C95DD50F195F}"
@@ -31,6 +32,10 @@ Global
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
+		{E0BFA130-CA27-4D45-B8BB-D8042EC11CF6} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
 		{EF8DC1AA-3116-4203-A149-BC8CA4220909} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {BBFAD6BB-EAF3-45AC-9A98-551631B682CD}
 	EndGlobalSection
 EndGlobal
