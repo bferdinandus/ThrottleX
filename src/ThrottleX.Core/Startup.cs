@@ -1,4 +1,5 @@
-﻿using ThrottleX.Core.Services;
+﻿using Loconet;
+using WiThrottle;
 
 namespace ThrottleX.Core;
 
@@ -16,6 +17,7 @@ public class Startup
         // Configure and add WiThrottleService
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
         services.AddHostedService<WiThrottleService>();
+        services.AddHostedService<LoconetService>();
 
         // Add services to the container.
 

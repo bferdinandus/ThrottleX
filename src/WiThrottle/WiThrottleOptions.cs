@@ -1,4 +1,4 @@
-﻿namespace ThrottleX.Core.Services;
+﻿namespace WiThrottle;
 
 public class WiThrottleOptions
 {

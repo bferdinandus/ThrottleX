@@ -3,9 +3,11 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 using Makaretu.Dns;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ThrottleX.Core.Services;
+namespace WiThrottle;
 
 public class WiThrottleService : BackgroundService
 {

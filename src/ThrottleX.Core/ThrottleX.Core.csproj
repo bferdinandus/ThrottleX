@@ -14,7 +14,12 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Makaretu.Dns.Multicast.New" Version="0.31.0"/>
+    <ProjectReference Include="..\Loconet\Loconet.csproj" />
+    <ProjectReference Include="..\WiThrottle\WiThrottle.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Services\" />
   </ItemGroup>
 
 </Project>
