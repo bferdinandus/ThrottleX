@@ -1,7 +1,6 @@
 using ThrottleX.Core;
 
 CreateHostBuilder(args).Build().Run();
-
 return;
 
 static IHostBuilder CreateHostBuilder(string[] args) =>

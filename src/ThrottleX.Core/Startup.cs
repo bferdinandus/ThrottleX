@@ -13,10 +13,13 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        // Add services to the container.
-        services.AddRazorPages();
-
+        // Configure and add WiThrottleService
+        services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
         services.AddHostedService<WiThrottleService>();
+
+        // Add services to the container.
+
+        services.AddRazorPages();
 
         // Add other services here
     }
@@ -36,8 +39,6 @@ public class Startup
 
         app.UseAuthorization();
 
-        app.UseEndpoints(routeBuilder => {
-            routeBuilder.MapRazorPages();
-        });
+        app.UseEndpoints(routeBuilder => { routeBuilder.MapRazorPages(); });
     }
 }
