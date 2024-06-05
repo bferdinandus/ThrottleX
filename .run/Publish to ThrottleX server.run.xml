@@ -1,0 +1,8 @@
+﻿<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Publish to ThrottleX server" type="DotNetPublishAndUpload" factoryName="Publish to custom server">
+    <riderPublish configuration="Release" platform="Any CPU" runtime="linux-arm64" server_id="879ce1dd-300f-4e53-a5be-89424dfe03ee" serverName="ThrottleX" target_framework="net8.0" uuid_high="-1185078190216429053" uuid_low="-6824716448068138743" />
+    <method v="2">
+      <option name="Build" default="false" projectName="ThrottleX.Core" projectPath="$PROJECT_DIR$/src/ThrottleX.Core/ThrottleX.Core.csproj" />
+    </method>
+  </configuration>
+</component>
