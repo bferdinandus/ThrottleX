@@ -21,6 +21,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loconet", "src\Loconet\Loco
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WiThrottle", "src\WiThrottle\WiThrottle.csproj", "{6122FA7A-DDED-4D2E-841A-324B51CD8A36}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unittests", "test\Unittests\Unittests.csproj", "{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{6122FA7A-DDED-4D2E-841A-324B51CD8A36}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6122FA7A-DDED-4D2E-841A-324B51CD8A36}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6122FA7A-DDED-4D2E-841A-324B51CD8A36}.Release|Any CPU.Build.0 = Release|Any CPU
+		{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -48,6 +54,7 @@ Global
 		{EF8DC1AA-3116-4203-A149-BC8CA4220909} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
 		{F8B5BAF8-A269-4C23-AD95-E64DF78A3672} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
 		{6122FA7A-DDED-4D2E-841A-324B51CD8A36} = {E6C11790-D272-43C0-AB68-50B700AAAA8C}
+		{28C1137C-CD6C-4CBB-A57F-70BA5084BE39} = {EF36F24A-097A-4EEA-A400-C95DD50F195F}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {BBFAD6BB-EAF3-45AC-9A98-551631B682CD}
