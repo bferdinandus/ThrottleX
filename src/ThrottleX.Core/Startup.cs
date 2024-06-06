@@ -1,4 +1,4 @@
-﻿using Loconet;
+﻿using Shared.Models;
 using ThrottleX.Core.Loconet;
 using WiThrottle;
 
@@ -27,6 +27,7 @@ public class Startup
         services.AddRazorPages();
 
         // Add other services here
+        services.AddSingleton<WiThrottleLocoTables>();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

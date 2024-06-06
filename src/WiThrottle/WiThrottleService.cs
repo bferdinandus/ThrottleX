@@ -6,18 +6,22 @@ using Makaretu.Dns;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using Shared;
+using Shared.Models;
 
 namespace WiThrottle;
 
 public class WiThrottleService : BackgroundService
 {
+    private readonly WiThrottleLocoTables _locoTables;
     private readonly ILogger<WiThrottleService> _logger;
     private readonly WiThrottleOptions _options;
 
     private readonly ConcurrentDictionary<TcpClient, string> _clients = new();
 
-    public WiThrottleService(ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
+    public WiThrottleService(WiThrottleLocoTables locoTables, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
     {
+        _locoTables = locoTables;
         _logger = logger;
         _options = options.Value;
     }
@@ -132,6 +136,30 @@ public class WiThrottleService : BackgroundService
                 }
 
                 break;
+            case 'M': // MultiThrottle
+                char mtIdentifier = message[1];
+                string mtCommand = message[2..];
+
+
+                string[] commandParts = mtCommand.Split(Constants.Separator);
+                string key = commandParts[0];
+                string action = commandParts[0];
+
+                if (action[0] == '+') {
+                    LocoTable loco = new() {
+                        MultiThrottleInstance = mtIdentifier,
+                        LocomotiveKey = key[1..]
+                    };
+
+                    if (_locoTables.Locos.All(x => x.LocomotiveKey != key)) {
+                        _locoTables.Locos.Add(loco);
+                    }
+
+                    string response = $"M{loco.MultiThrottleInstance}+{loco.LocomotiveKey}{Constants.Separator}{Environment.NewLine}{loco.ToString()}";
+                    await SendMessageAsync(response, stream, stoppingToken);
+                }
+
+                break;
             default:
                 _logger.LogWarning("Unknown command: {command} in {message}", command, message);
                 break;
@@ -142,6 +170,6 @@ public class WiThrottleService : BackgroundService
     {
         byte[] messageToSend = Encoding.UTF8.GetBytes(message);
         await stream.WriteAsync(messageToSend, 0, messageToSend.Length, stoppingToken);
-        _logger.LogInformation("Send message: {message}", message);
+        _logger.LogInformation("Send message:\n{message}", message);
     }
 }

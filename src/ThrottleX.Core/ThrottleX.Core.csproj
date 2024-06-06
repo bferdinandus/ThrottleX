@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Loconet\Loconet.csproj" />
+    <ProjectReference Include="..\Shared\Shared.csproj" />
     <ProjectReference Include="..\WiThrottle\WiThrottle.csproj" />
   </ItemGroup>
 
