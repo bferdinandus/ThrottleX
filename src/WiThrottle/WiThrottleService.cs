@@ -34,6 +34,7 @@ public class WiThrottleService : BackgroundService
 
         // Advertise the service using mDNS
         ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp", _options.Port);
+        serviceProfile.AddProperty("thisIsKey","thisIsVlue");
         ServiceDiscovery serviceDiscovery = new();
         serviceDiscovery.Advertise(serviceProfile);
 
@@ -72,13 +73,13 @@ public class WiThrottleService : BackgroundService
                     break;
                 }
 
-                string message = Encoding.ASCII.GetString(buffer, 0, byteCount);
+                string message = Encoding.UTF8.GetString(buffer, 0, byteCount);
                 _logger.LogDebug("Received from {endPoint}: {message}", endPoint, message);
                 _clients[client] += message;
 
                 // Process each line of the message
                 // todo: before splitting make sure the last char is a NewLine. If not; put the last part back in _clients[client]
-                string[] lines = _clients[client].Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries);
+                string[] lines = _clients[client].Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
                 foreach (string line in lines) {
                     _logger.LogInformation("Processing message from {endPoint}: {line}", endPoint, line);
                     await HandleIncomingMessageAsync(line, stream, stoppingToken);
@@ -119,7 +120,7 @@ public class WiThrottleService : BackgroundService
                 string deviceName = message[1..];
                 _logger.LogInformation("Received Name: {deviceName}", deviceName);
 
-                await SendMessageAsync($"*0{Environment.NewLine}", stream, stoppingToken);
+                await SendMessageAsync($"*60{Environment.NewLine}", stream, stoppingToken);
 
                 break;
             case 'H': // Hardware
@@ -128,7 +129,7 @@ public class WiThrottleService : BackgroundService
                 switch (subCommand) {
                     case 'U': // Identifier
                         string deviceIdentifier = message[2..];
-                        _logger.LogInformation("Received Name: {deviceIdentifier}", deviceIdentifier);
+                        _logger.LogInformation("Received Uid: {deviceIdentifier}", deviceIdentifier);
                         break;
                     default:
                         _logger.LogWarning("Unknown sub command: {command} in {message}", command, message);
@@ -155,10 +156,12 @@ public class WiThrottleService : BackgroundService
                         _locoTables.Locos.Add(loco);
                     }
 
-                    string response = $"M{loco.MultiThrottleInstance}+{loco.LocomotiveKey}{Constants.Separator}{Environment.NewLine}{loco.ToString()}";
+                    string response = $"M{loco.MultiThrottleInstance}+{loco.LocomotiveKey}{Constants.Separator}{Environment.NewLine}";
                     await SendMessageAsync(response, stream, stoppingToken);
                 }
 
+                break;
+            case '*':
                 break;
             default:
                 _logger.LogWarning("Unknown command: {command} in {message}", command, message);
@@ -170,6 +173,6 @@ public class WiThrottleService : BackgroundService
     {
         byte[] messageToSend = Encoding.UTF8.GetBytes(message);
         await stream.WriteAsync(messageToSend, 0, messageToSend.Length, stoppingToken);
-        _logger.LogInformation("Send message:\n{message}", message);
+        _logger.LogInformation("Send message: {message}", message);
     }
 }
