@@ -1,0 +1,155 @@
+﻿C:/Users/Ben/projects/ThrottleX/src/ThrottleX.Core/bin/Debug/net8.0/ThrottleX.Core.exe
+info: WiThrottle.WiThrottleService[0]
+      Server started on port: 12090.
+info: ThrottleX.Core.Loconet.LoconetService[0]
+      Starting Loconet client for localhost:1234
+info: ThrottleX.Core.Loconet.LoconetService[0]
+      Starting Loconet client for sbor1:1234
+info: Microsoft.Hosting.Lifetime[14]
+      Now listening on: http://0.0.0.0:5000
+info: Microsoft.Hosting.Lifetime[0]
+      Application started. Press Ctrl+C to shut down.
+info: Microsoft.Hosting.Lifetime[0]
+      Hosting environment: Development
+info: Microsoft.Hosting.Lifetime[0]
+      Content root path: C:\Users\Ben\projects\ThrottleX\src\ThrottleX.Core
+info: WiThrottle.WiThrottleService[0]
+      Client connected: 192.168.0.101:49931
+info: WiThrottle.WiThrottleService[0]
+      Send message:
+VN2.0
+
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: NBas Pols -1
+info: WiThrottle.WiThrottleService[0]
+      Received Name: Bas Pols -1
+info: WiThrottle.WiThrottleService[0]
+      Send message:
+*60
+
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: HU7cdfa13d7278
+info: WiThrottle.WiThrottleService[0]
+      Received Name: 7cdfa13d7278
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: *+
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>X
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MT+L1418<;>L1418
+info: WiThrottle.WiThrottleService[0]
+      Send message:
+MT+L1418<;>
+      MTAL1418<;>F00
+      MTAL1418<;>F01
+      MTAL1418<;>F02
+      MTAL1418<;>F03
+      MTAL1418<;>F04
+      MTAL1418<;>F05
+      MTAL1418<;>F06
+      MTAL1418<;>F07
+      MTAL1418<;>F08
+      MTAL1418<;>F09
+      MTAL1418<;>F010
+      MTAL1418<;>F011
+      MTAL1418<;>F012
+      MTAL1418<;>F013
+      MTAL1418<;>F014
+      MTAL1418<;>F015
+      MTAL1418<;>F016
+      MTAL1418<;>F017
+      MTAL1418<;>F018
+      MTAL1418<;>F019
+      MTAL1418<;>F020
+      MTAL1418<;>F021
+      MTAL1418<;>F022
+      MTAL1418<;>F023
+      MTAL1418<;>F024
+      MTAL1418<;>F025
+      MTAL1418<;>F026
+      MTAL1418<;>F027
+      MTAL1418<;>F028
+      MTAL1418<;>V0
+      MTAL1418<;>R1
+      MTAL1418<;>s1
+
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>X
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f00
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f01
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>m02
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f02
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f03
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f04
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f05
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f06
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f07
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f08
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f09
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f010
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f011
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f012
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f013
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f014
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f015
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>f016
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>R0
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: *
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: *
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>R1
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>R0
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>F10
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>F00
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>F11
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>F01
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>F12
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTAL1418<;>F02
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: *
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V3
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V11
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V14
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V15
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V14
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V6
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>V0
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: MTA*<;>X
+info: WiThrottle.WiThrottleService[0]
+      Processing message from 192.168.0.101:49931: *
