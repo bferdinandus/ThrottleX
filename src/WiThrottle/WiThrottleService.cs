@@ -17,7 +17,9 @@ public class WiThrottleService : BackgroundService
     private readonly ILogger<WiThrottleService> _logger;
     private readonly WiThrottleOptions _options;
 
-    private readonly ConcurrentDictionary<TcpClient, string> _clients = new();
+    private readonly ConcurrentDictionary<string, TcpClientConnection> _clients = new();
+    private ServiceDiscovery _serviceDiscovery;
+    private TcpListener _tcpListener;
 
     public WiThrottleService(WiThrottleLocoTables locoTables, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
     {
@@ -26,75 +28,92 @@ public class WiThrottleService : BackgroundService
         _options = options.Value;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public override Task StartAsync(CancellationToken cancellationToken)
     {
-        TcpListener listener = new(IPAddress.Any, _options.Port);
-        listener.Start();
+        // open the port for wiFreds to connect on
+        _tcpListener = new TcpListener(IPAddress.Any, _options.Port);
+        ;
+        _tcpListener.Start();
         _logger.LogInformation("Server started on port: {port}.", _options.Port);
 
-        // Advertise the service using mDNS
+        // Advertise the service using mDNS / zefoConf
         ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp", _options.Port);
-        serviceProfile.AddProperty("thisIsKey","thisIsVlue");
-        ServiceDiscovery serviceDiscovery = new();
-        serviceDiscovery.Advertise(serviceProfile);
+        serviceProfile.AddProperty("thisIsKey", "thisIsValue");
+        _serviceDiscovery = new ServiceDiscovery();
+        _serviceDiscovery.Advertise(serviceProfile);
 
-        while (!stoppingToken.IsCancellationRequested) {
-            if (listener.Pending()) {
-                TcpClient client = await listener.AcceptTcpClientAsync(stoppingToken);
-                _clients.TryAdd(client, string.Empty);
-                _logger.LogInformation("Client connected: {remoteEndPoint}", client.Client.RemoteEndPoint);
-                _ = HandleClientAsync(client, stoppingToken);
-            }
-
-            await Task.Delay(100, stoppingToken); // Prevents tight loop if no clients are connecting
-        }
-
-        _logger.LogInformation("Server stopping....");
-        serviceDiscovery.Unadvertise();
-        serviceDiscovery.Dispose();
-        listener.Stop();
+        return base.StartAsync(cancellationToken);
     }
 
-    private async Task HandleClientAsync(TcpClient client, CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        // TODO: add client management for multiple clients
+        while (!stoppingToken.IsCancellationRequested) {
+            TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
+            TcpClientConnection clientConnection = new() { Client = tcpClient };
 
+            _clients.TryAdd(clientConnection.ClientId, clientConnection);
+            _logger.LogInformation("Client connected: {remoteEndPoint}", tcpClient.Client.RemoteEndPoint);
+            _ = Task.Run(() => HandleClientAsync(clientConnection, stoppingToken), stoppingToken);
+        }
+    }
+
+    private async Task HandleClientAsync(TcpClientConnection clientConnection, CancellationToken stoppingToken)
+    {
         byte[] buffer = new byte[1024];
-        NetworkStream stream = client.GetStream();
-        string? endPoint = client.Client.RemoteEndPoint?.ToString();
+        StringBuilder messageBuffer = new();
 
         try {
+            await using NetworkStream stream = clientConnection.Client.GetStream();
+
             // Send welcome message to the client
             await SendMessageAsync(WelcomeMessage(), stream, stoppingToken);
 
-            while (client.Connected && !stoppingToken.IsCancellationRequested) {
-                int byteCount = await stream.ReadAsync(buffer, 0, buffer.Length, stoppingToken);
-                if (byteCount == 0) {
-                    break;
+            int bytesRead;
+            while ((bytesRead = await stream.ReadAsync(buffer, stoppingToken)) != 0) {
+                // Convert the received bytes into a string and append to the message buffer
+                string receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
+                messageBuffer.Append(receivedText);
+
+                _logger.LogDebug("Received text from {clientId}: {receivedText}", clientConnection.ClientId, receivedText);
+
+                // Extract and process complete messages
+                List<string> messages = ExtractCompleteMessages(ref messageBuffer);
+                foreach (string message in messages) {
+                    _logger.LogInformation("Processing message from {clientId}: `{message}`", clientConnection.ClientId, message);
+                    await HandleIncomingMessageAsync(message, stream, stoppingToken);
                 }
-
-                string message = Encoding.UTF8.GetString(buffer, 0, byteCount);
-                _logger.LogDebug("Received from {endPoint}: {message}", endPoint, message);
-                _clients[client] += message;
-
-                // Process each line of the message
-                // todo: before splitting make sure the last char is a NewLine. If not; put the last part back in _clients[client]
-                string[] lines = _clients[client].Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-                foreach (string line in lines) {
-                    _logger.LogInformation("Processing message from {endPoint}: {line}", endPoint, line);
-                    await HandleIncomingMessageAsync(line, stream, stoppingToken);
-                }
-
-                // Reset the message buffer for the client
-                _clients[client] = string.Empty;
             }
         } catch (Exception ex) {
-            _logger.LogInformation("Error with client {endPoint}: {message}", endPoint, ex.Message);
+            _logger.LogError(ex, "Error with client {clientId}", clientConnection.ClientId);
         } finally {
-            _clients.TryRemove(client, out _);
-            client.Close();
-            _logger.LogInformation("Client disconnected: {endPoint}", endPoint);
+            _clients.TryRemove(clientConnection.ClientId, out _);
+            clientConnection.Client.Close();
+            _logger.LogInformation("Client disconnected: {clientId}", clientConnection.ClientId);
         }
+    }
+
+    private static List<string> ExtractCompleteMessages(ref StringBuilder messageBuffer)
+    {
+        string bufferContent = messageBuffer.ToString();
+        List<string> messages = [];
+
+        // when the buffer content ends with a newline the last message is considered complete
+        // if not complete it should be added back to the messageBuffer and wait for more characters
+        bool lastMessageComplete = bufferContent[^1] == '\r' || bufferContent[^1] == '\n';
+
+        // Split the buffer content by newline characters
+        string[] splitMessages = bufferContent.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        // Add all complete messages to the list
+        messages.AddRange(lastMessageComplete ? splitMessages : splitMessages[..^1]);
+
+        // Clear the messageBuffer and append the last (incomplete) part back to it
+        messageBuffer.Clear();
+        if (!lastMessageComplete) {
+            messageBuffer.Append(splitMessages[^1]);
+        }
+
+        return messages;
     }
 
     private static string WelcomeMessage()
@@ -113,6 +132,10 @@ public class WiThrottleService : BackgroundService
 
     private async Task HandleIncomingMessageAsync(string message, NetworkStream stream, CancellationToken stoppingToken)
     {
+        if (string.IsNullOrWhiteSpace(message)) {
+            return;
+        }
+
         char command = message[0];
 
         switch (command) {
@@ -140,7 +163,6 @@ public class WiThrottleService : BackgroundService
             case 'M': // MultiThrottle
                 char mtIdentifier = message[1];
                 string mtCommand = message[2..];
-
 
                 string[] commandParts = mtCommand.Split(Constants.Separator);
                 string key = commandParts[0];
@@ -172,7 +194,22 @@ public class WiThrottleService : BackgroundService
     private async Task SendMessageAsync(string message, NetworkStream stream, CancellationToken stoppingToken)
     {
         byte[] messageToSend = Encoding.UTF8.GetBytes(message);
-        await stream.WriteAsync(messageToSend, 0, messageToSend.Length, stoppingToken);
+        await stream.WriteAsync(messageToSend, stoppingToken);
         _logger.LogInformation("Send message: {message}", message);
+    }
+
+    public override async Task StopAsync(CancellationToken cancellationToken)
+    {
+        _logger.LogInformation("WiThrottle stopping....");
+        _serviceDiscovery.Unadvertise();
+        _serviceDiscovery.Dispose();
+        _tcpListener.Stop();
+
+        foreach (TcpClientConnection client in _clients.Values) {
+            client.Client.Close();
+        }
+
+        await base.StopAsync(cancellationToken);
+        _logger.LogInformation("WiThrottle stopped....");
     }
 }
