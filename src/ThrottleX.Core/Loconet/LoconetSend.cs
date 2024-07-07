@@ -79,7 +79,7 @@ public class LoconetSend : IDisposable
     {
         var rqSlData = new RqSlData(0);
 
-        var success = _loconetClient.SendAndWaitReply(rqSlData, out var reply);
+        var success = _loconetClient.SendAndWaitReply(rqSlData, out SlRdData? reply);
 
         if (success == LoconetClient.LoconetSendResult.Success)
         {

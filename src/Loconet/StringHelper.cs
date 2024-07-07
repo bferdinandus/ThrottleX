@@ -18,4 +18,12 @@ public static class StringHelper
             _ => throw new InvalidOperationException($"invalid hex character: '{c}'")
         };
     }
+
+    /// <summary>
+    /// Hex dump with a space between the byes as used for LoconetOverTcp
+    /// </summary>
+    public static string ToHex(this byte[] bytes)
+    {
+        return BitConverter.ToString(bytes).Replace('-', ' ');
+    }
 }

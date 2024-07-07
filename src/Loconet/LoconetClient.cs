@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Logging;
+﻿using Loconet.Msg;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -17,6 +18,7 @@ namespace Loconet
     {
         private readonly string _host;
         private readonly ushort _port;
+        private readonly MessageLookup _messageLookup = new ();
         private readonly CancellationTokenSource _cancellationSource = new ();
         private readonly CancellationToken _cancellation;
         private readonly byte[] _buffer = new byte[1000];
@@ -29,7 +31,7 @@ namespace Loconet
         private TcpClient? _client;
         private bool _sentError;
         private bool _nextReceiveIsReply = false;
-        private byte[]? _reply;
+        private ReceivableLoconetMessage? _reply;
 
         public readonly ILogger Logger;
 
@@ -41,7 +43,7 @@ namespace Loconet
         /// <summary>
         /// Attach handler for received LocoNet messages
         /// </summary>
-        public event Action<LoconetMessage>? OnMessageReceived;
+        public event Action<ReceivableLoconetMessage>? OnMessageReceived;
 
         public LoconetClient(string host, ushort port, ILogger logger)
         {
@@ -80,11 +82,15 @@ namespace Loconet
             UnexpectedReply = -1,
         }
 
-        public LoconetSendResult BlockingSend(LoconetMessage msg)
+        public LoconetSendResult BlockingSend<TFormat>(TFormat msg)
+            where TFormat : FormatBase, ILoconetMessageFormat
         {
-            msg.SetCheckByte(); // caller does not need to call this!
+            var msgHex = msg.Encode<TFormat>().ToHex();
+            return BlockingSend(msgHex);
+        }
 
-            var msgHex = msg.Hex;
+        private LoconetSendResult BlockingSend(string msgHex)
+        {
             Logger.LogTrace($"Sending msg {msgHex}");
             var line = Encoding.ASCII.GetBytes($"SEND {msgHex}\r\n");
 
@@ -120,9 +126,11 @@ namespace Loconet
             }
         }
 
-        public LoconetSendResult SendAndWaitReply(LoconetMessage request, out LoconetMessage reply)
+        public LoconetSendResult SendAndWaitReply<TSentFormat, TExpectedReply>(TSentFormat request, out TExpectedReply? reply)
+            where TSentFormat : FormatBase, ILoconetMessageFormat
+            where TExpectedReply : ReceivableLoconetMessage
         {
-            reply = null!;
+            reply = null;
             lock (_replyEvent) // serialize waiting for reply, which use _replyEvent
             {
                 _replyEvent.Reset();
@@ -136,7 +144,10 @@ namespace Loconet
                 if (!replied)
                     return LoconetSendResult.ReplyTimeout;
 
-                reply = new LoconetMessage.Unknown(_reply!);
+                if (!typeof(TExpectedReply).IsAssignableFrom(_reply!.GetType()))
+                    return LoconetSendResult.UnexpectedReply;
+
+                reply = (TExpectedReply) _reply;
                 return LoconetSendResult.Success;
             }
         }
@@ -290,15 +301,20 @@ namespace Loconet
             var msg = new byte[i];
             Array.Copy(_buffer, msg, i);
 
+            ReceivableLoconetMessage? parsed = _messageLookup.ParseMessage(msg);
+
+            if (parsed == null)
+                parsed = new LoconetMessage(msg);
+
             // Are we waiting for a reply and this is not an OPC_BUSY?
             if (_nextReceiveIsReply && msg[0]!=0x81)
             {
                 _nextReceiveIsReply = false;
-                _reply = msg;
+                _reply = parsed;
                 _replyEvent.Set();
             }
 
-            OnMessageReceived?.Invoke(new LoconetMessage.Unknown(msg));
+            OnMessageReceived?.Invoke(parsed!);
         }
 
         protected virtual void OnSent(string param)
