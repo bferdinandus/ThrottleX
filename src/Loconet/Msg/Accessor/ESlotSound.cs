@@ -1,6 +1,6 @@
 ﻿namespace Loconet.Msg.Accessor;
 
-public enum ESlotSound
+public enum ESlotSound : byte
 {
     F8 = 0x08,
     F7 = 0x04,

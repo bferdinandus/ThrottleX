@@ -4,7 +4,7 @@ namespace Loconet.Msg;
 
 public class LocoDirf : FormatBase, ILoconetMessageFormat
 {
-    public static byte Opcode => 0xA2;
+    public static byte Opcode => 0xA1;
 
     public static byte Length => 4;
 

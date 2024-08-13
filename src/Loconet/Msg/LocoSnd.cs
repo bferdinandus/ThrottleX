@@ -2,7 +2,7 @@
 
 namespace Loconet.Msg;
 
-public class LocoStat1 : FormatBase, ILoconetMessageFormat
+public class LocoSnd : FormatBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xA2;
 
@@ -14,7 +14,7 @@ public class LocoStat1 : FormatBase, ILoconetMessageFormat
 
     public readonly BitField7Bit<ESlotSound> Snd;
 
-    public LocoStat1()
+    public LocoSnd()
     {
         Slot = new(this, 1);
         Snd = new(this, 2);

@@ -6,15 +6,16 @@ using System.Threading.Tasks;
 
 namespace Loconet.Msg;
 
-public class MessageLookup
+public class MessageLookup : MessageEnumerator
 {
     private readonly Dictionary<(byte Opcode, byte Length), Type> _table = [];
 
     public IEnumerable<Type> EnumerateTypes => _table.Values;
+    public IEnumerable<(byte, byte, Type)> EnumerateAll => _table.Select(pair => (pair.Key.Opcode, pair.Key.Length, pair.Value));
 
-    private void AddOne<T>() where T : FormatBase, ILoconetMessageFormat
+    protected override void AddMessage(byte opcode, byte length, Type type)
     {
-        _table.Add((T.Opcode, T.Length), typeof(T));
+        _table.Add((opcode, length), type);
     }
 
     public FormatBase? ParseMessage(byte[] msg)
@@ -34,12 +35,5 @@ public class MessageLookup
         instance.Decode(msg);
 
         return instance;
-    }
-
-    public MessageLookup()
-    {
-        AddOne<RqSlData>();
-        AddOne<WrSlData>();
-        AddOne<SlRdData>();
     }
 }
