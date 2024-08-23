@@ -11,7 +11,7 @@ public class BitGroupAccessUInt
     /// New instance with given sequence of bits
     /// </summary>
     /// <param name="lsbitToMsbit">First element in parameter array is for the least significant bit of Value</param>
-    public BitGroupAccessUInt( (BitField7BitBase, byte)[] lsbitToMsbit)
+    public BitGroupAccessUInt(params (BitField7BitBase, byte)[] lsbitToMsbit)
     {
         _mappings = lsbitToMsbit;
     }

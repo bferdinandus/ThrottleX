@@ -19,5 +19,6 @@ public abstract class MessageEnumerator
         AddOne<RqSlData>();
         AddOne<SlRdData>();
         AddOne<WrSlData>();
+        AddOne<ImmPacket>();
     }
 }
