@@ -8,7 +8,7 @@ public class BitGroupAccessEnum<TApiEnum> : BitGroupAccessUInt where TApiEnum : 
     /// New instance with given sequence of bits
     /// </summary>
     /// <param name="lsbitToMsbit">First element in parameter array is for the least significant bit of Value</param>
-    public BitGroupAccessEnum((BitField7BitBase, byte)[] lsbitToMsbit) 
+    public BitGroupAccessEnum(params (BitField7BitBase, byte)[] lsbitToMsbit) 
     : base(lsbitToMsbit)
     {
     }
