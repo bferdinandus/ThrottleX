@@ -18,8 +18,8 @@ public class WiThrottleService : BackgroundService
     private readonly WiThrottleOptions _options;
 
     private readonly ConcurrentDictionary<string, TcpClientConnection> _clients = new();
-    private ServiceDiscovery _serviceDiscovery;
-    private TcpListener _tcpListener;
+    private ServiceDiscovery _serviceDiscovery = default!;
+    private TcpListener _tcpListener = default!;
 
     public WiThrottleService(WiThrottleLocoTables locoTables, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
     {
@@ -32,7 +32,7 @@ public class WiThrottleService : BackgroundService
     {
         // open the port for wiFreds to connect on
         _tcpListener = new TcpListener(IPAddress.Any, _options.Port);
-        ;
+
         _tcpListener.Start();
         _logger.LogInformation("Server started on port: {port}.", _options.Port);
 

@@ -1,0 +1,32 @@
+@model ThrottleX.Core.Pages.Components.WiFredClients
+<div>
+    <caption>WiFred clients</caption>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>uid</th>
+            <th>mac address</th>
+            <th>loco(s)</th>
+            <th>status</th>
+            <th>time since last message</th>
+        </tr>
+        @foreach(var client in Model.Clients)
+        {
+            <tr>
+                <td>@client.Name</td>
+                <td>@client.Uid</td>
+                <td>@client.MacAddress</td>
+                <td>@client.Locos</td>
+                <td>@client.Status</td>
+                <td>@client.TimeSinceLastMessage</td>
+            </tr>
+        }
+    </table>
+    <div>@Model.TestString</div>
+    <div>
+        Add fake client:
+        <button hydro-on:click="@(() => Model.Add())">
+            Add
+        </button>
+    </div>
+</div>

@@ -1,4 +1,5 @@
-﻿using Shared.Models;
+﻿using Hydro.Configuration;
+using Shared.Models;
 using ThrottleX.Core.Loconet;
 using WiThrottle;
 
@@ -25,6 +26,7 @@ public class Startup
         // Add services to the container.
 
         services.AddRazorPages();
+        services.AddHydro();
 
         // Add other services here
         services.AddSingleton<WiThrottleLocoTables>();
@@ -46,5 +48,6 @@ public class Startup
         app.UseAuthorization();
 
         app.UseEndpoints(routeBuilder => { routeBuilder.MapRazorPages(); });
+        app.UseHydro(env); // Hydro
     }
 }

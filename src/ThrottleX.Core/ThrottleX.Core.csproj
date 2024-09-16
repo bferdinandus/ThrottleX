@@ -23,4 +23,9 @@
     <Folder Include="Services\" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Bogus" Version="35.6.1" />
+    <PackageReference Include="Hydro" Version="0.15.1" />
+  </ItemGroup>
+
 </Project>
