@@ -37,6 +37,11 @@ public abstract class FormatBase : ReceivableLoconetMessage
             msg[field.Index] = field.Value;
         }
 
+        byte check = 0xff;
+        for (var i=0; i<T.Length-1; i++)
+            check ^= msg[i];
+        msg[T.Length - 1] = check;
+
         return msg;
     }
 
