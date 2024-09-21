@@ -83,7 +83,12 @@ public class LoconetSend : IDisposable
 
         if (success == LoconetClient.LoconetSendResult.Success)
         {
-            _logger.LogInformation($"Reply is {reply}");
+            _logger.LogDebug($"Reply is {reply}");
+            foreach (var tuple in CommandStation.Evaluate(reply!))
+            {
+                _logger.LogDebug($"{tuple.percent}% for {tuple.cs.Title}");
+            }
+            _logger.LogInformation($"Guessing this command station is {CommandStation.Guess(reply!)}");
         }
         else
         {
