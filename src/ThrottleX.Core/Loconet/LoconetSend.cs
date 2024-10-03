@@ -12,6 +12,19 @@ public class LoconetSend : IDisposable
     private readonly ILogger _logger;
     private readonly Thread _thread;
 
+    public enum EState
+    {
+        Init,
+        WaitForOperational,
+        Initialize,
+        NormalOperation,
+        Exit,
+        Exception,
+    }
+
+    public EState State { private set; get; } = EState.Init;
+    public CommandStation? GuessedCommandStation { private set; get; }
+
     public LoconetSend(LoconetClient loconetClient)
     {
         _loconetClient = loconetClient;
@@ -45,16 +58,21 @@ public class LoconetSend : IDisposable
         {
             try
             {
+                State = EState.WaitForOperational;
                 WaitForOperational();
-                Initialize(); 
+                State = EState.Initialize;
+                Initialize();
+                State = EState.NormalOperation;
                 NormalOperation();
             }
             catch (OperationCanceledException)
             {
+                State = EState.Exit;
                 return;
             }
             catch (Exception ex)
             {
+                State = EState.Exception;
                 _logger.LogError(ex, $"Caught exception in Loconet send thread, waiting {SendWait.TotalSeconds}s and retrying to go to normal operation...");
                 _cancellation.WaitHandle.WaitOne(SendWait);
             }
@@ -77,6 +95,8 @@ public class LoconetSend : IDisposable
 
     private void Initialize()
     {
+        GuessedCommandStation = null;
+
         var rqSlData = new RqSlData(0);
 
         var success = _loconetClient.SendAndWaitReply(rqSlData, out SlRdData? reply);
@@ -88,7 +108,9 @@ public class LoconetSend : IDisposable
             {
                 _logger.LogDebug($"{tuple.percent}% for {tuple.cs.Title}");
             }
-            _logger.LogInformation($"Guessing this command station is {CommandStation.Guess(reply!)}");
+
+            GuessedCommandStation = CommandStation.Guess(reply!);
+            _logger.LogInformation($"Guessing this command station is {GuessedCommandStation}");
         }
         else
         {

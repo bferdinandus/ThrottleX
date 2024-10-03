@@ -10,10 +10,18 @@ public class LoconetService : BackgroundService
     private readonly ILogger _logger;
     private readonly LoconetOptions _options;
 
+    /// <summary>
+    /// Just until I learnt how to geht the one instance properly....
+    /// </summary>
+    public static LoconetService? Instance;
+
+    public IEnumerable<(LoconetClient client, LoconetSend send)> Clients => _connections;
+
     public LoconetService(ILogger<LoconetService>? logger, LoconetOptions? options)
     {
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
         _options = options ?? throw new ArgumentNullException(nameof(options));
+        Instance = this;
     }
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)

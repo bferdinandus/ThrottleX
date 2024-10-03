@@ -28,4 +28,11 @@
     <PackageReference Include="Hydro" Version="0.15.1" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Content Update="Pages\Components\LoconetConnections.cshtml">
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

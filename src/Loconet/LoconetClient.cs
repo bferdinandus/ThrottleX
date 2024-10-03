@@ -16,8 +16,8 @@ namespace Loconet
     /// </summary>
     public class LoconetClient : IDisposable
     {
-        private readonly string _host;
-        private readonly ushort _port;
+        public readonly string Host;
+        public readonly ushort Port;
         private readonly MessageLookup _messageLookup = new ();
         private readonly CancellationTokenSource _cancellationSource = new ();
         private readonly CancellationToken _cancellation;
@@ -25,9 +25,9 @@ namespace Loconet
         private readonly Thread _receiveThread;
         private readonly AutoResetEvent _sentEvent = new(false);
         private readonly AutoResetEvent _replyEvent = new(false);
-        private enum LoconetState { Start, Connect, Init, Operation, Wait, Shutdown };
+        public enum LoconetState { Start, Connect, Init, Operation, Wait, Shutdown };
 
-        private LoconetState _state = LoconetState.Start;
+        public LoconetState State { get; private set; } = LoconetState.Start;
         private TcpClient? _client;
         private bool _sentError;
         private bool _nextReceiveIsReply = false;
@@ -47,9 +47,9 @@ namespace Loconet
 
         public LoconetClient(string host, ushort port, ILogger logger)
         {
-            _host = host;
-            _port = port;
-            PeerName = $"{_host}:{_port}";
+            Host = host;
+            Port = port;
+            PeerName = $"{Host}:{Port}";
             Logger = logger;
 
             _cancellation = _cancellationSource.Token;
@@ -58,13 +58,13 @@ namespace Loconet
 
         public string PeerName { get; }
 
-        public bool IsOperational => _state == LoconetState.Operation;
+        public bool IsOperational => State == LoconetState.Operation;
 
         public string? ServerVersionInfo { get; private set; } = null;
 
         public override string ToString()
         {
-            return $"{PeerName} state {_state}";
+            return $"{PeerName} state {State}";
         }
 
         /// <summary>
@@ -162,15 +162,15 @@ namespace Loconet
                 {
                     try
                     {
-                        _state = LoconetState.Connect;
+                        State = LoconetState.Connect;
                         Logger.LogInformation($"Connecting to {PeerName}");
-                        _client = new TcpClient(_host, _port);
+                        _client = new TcpClient(Host, Port);
 
-                        _state = LoconetState.Init;
+                        State = LoconetState.Init;
                         Logger.LogInformation("Initializing");
                         OnConnectionEstablished?.Invoke();
 
-                        _state = LoconetState.Operation;
+                        State = LoconetState.Operation;
                         Logger.LogInformation("In normal operation");
                         while (!_cancellation.IsCancellationRequested)
                         {
@@ -197,13 +197,13 @@ namespace Loconet
                         Logger.LogError(ex, $"Caught exception in Loconet receive thread, waiting {RetryWait.TotalSeconds}s and retrying to connect... ({PeerName})");
                     }
                     _client = null;
-                    _state = LoconetState.Wait;
+                    State = LoconetState.Wait;
                     _cancellation.WaitHandle.WaitOne(RetryWait);
                 }
             }
             finally
             {
-                _state = LoconetState.Shutdown;
+                State = LoconetState.Shutdown;
             }
         }
 

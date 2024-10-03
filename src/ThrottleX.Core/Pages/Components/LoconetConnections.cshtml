@@ -1,0 +1,29 @@
+@model ThrottleX.Core.Pages.Components.LoconetConnections
+<div>
+    <caption>LocoNet connections</caption>
+    <table>
+        <tr>
+            <th colspan="4">LoconetOverTcp Connection</th>
+            <th colspan="2">Send thread</th>
+        </tr>
+        <tr>
+            <th>Host</th>
+            <th>Port</th>
+            <th>State</th>
+            <th>Server Info</th>
+            <th>State</th>
+            <th>Command Station</th>
+        </tr>
+        @foreach (var c in Model.Connections!)
+        {
+            <tr>
+                <td>@c.client.Host</td>
+                <td>@c.client.Port</td>
+                <td>@c.client.State</td>
+                <td>@(c.client.ServerVersionInfo ?? "unknown")</td>
+                <td>@c.send.State</td>
+                <td>@(c.send.GuessedCommandStation?.Title ?? "unknown")</td>
+            </tr>
+        }
+    </table>
+</div>
