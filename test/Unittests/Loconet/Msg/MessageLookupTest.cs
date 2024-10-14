@@ -11,14 +11,16 @@ public class MessageLookupTest(ITestOutputHelper _output)
     public static IEnumerable<object[]> EnumerateAll()
     {
         var uut = new MessageLookup();
-        return uut.EnumerateAll.Select(olt => new object[] { olt.Item1, olt.Item2, olt.Item3, olt.Item4 });
+        return uut.EnumerateAll.Select(olt => new object[] { olt.opcode, olt.length, olt.type });
     }
 
     [Theory]
     [MemberData(nameof(EnumerateAll))]
-    public void TestAllFormats(byte opcode, byte length, bool isVariableLength, Type messageFormat)
+    public void TestAllFormats(byte opcode, byte length, Type messageFormat)
     {
         _output.WriteLine(messageFormat.ToString());
+
+        var isVariableLength = opcode.IsVariableLength();
 
         CheckOpcode(opcode, length, isVariableLength);
 

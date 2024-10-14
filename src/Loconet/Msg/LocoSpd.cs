@@ -8,8 +8,6 @@ public class LocoSpd : FormatBase, ILoconetMessageFormat
 
     public static byte Length => 4;
 
-    public static bool IsVariableLength => false;
-
     public readonly Field7Bit Slot;
 
     /// <summary>

@@ -38,7 +38,7 @@ public abstract class FormatBase : ReceivableLoconetMessage
 
         msg[0] = T.Opcode;
     
-        if (T.IsVariableLength)
+        if (T.Opcode.IsVariableLength())
             msg[1] = T.Length;
 
         foreach (var field in EnumerateFields)

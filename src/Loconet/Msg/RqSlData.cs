@@ -9,7 +9,6 @@ public class RqSlData : FormatBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xBB;
     public static byte Length => 4;
-    public static bool IsVariableLength => false;
 
     public readonly ConstantField Spare = new(1, 0);
     public readonly Field7Bit Slot = new(2);

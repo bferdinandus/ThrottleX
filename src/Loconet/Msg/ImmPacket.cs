@@ -13,8 +13,6 @@ public class ImmPacket : FormatBase, ILoconetMessageFormat
 
     public static byte Length => 11;
 
-    public static bool IsVariableLength => true;
-
     public enum EReps : byte
     {
         Count0 = 0x01,

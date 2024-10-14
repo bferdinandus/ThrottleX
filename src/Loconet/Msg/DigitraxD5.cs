@@ -14,8 +14,6 @@ public class DigitraxD5 : FormatBase, ILoconetMessageFormat
 
     public static byte Length => 6;
 
-    public static bool IsVariableLength => false;
-
     /// <summary>
     /// atyp_0: Slot 0 bis 119
     /// atyp_1: Slot 120 bis 239

@@ -8,8 +8,6 @@ internal class LocoAdr : FormatBase, ILoconetMessageFormat
 
     public static byte Length => 4;
 
-    public static bool IsVariableLength => false;
-
     /// <summary>
     /// Most significant bits of address, locope pretends "0" for this ;-)
     /// </summary>

@@ -10,5 +10,4 @@ public class SlRdData : SlotDataBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xE7;
     public static byte Length => 14;
-    public static bool IsVariableLength => true;
 }

@@ -8,8 +8,6 @@ internal class LongAck : FormatBase, ILoconetMessageFormat
 
     public static byte Length => 4;
 
-    public static bool IsVariableLength => false;
-
     public readonly Field7Bit LOpc;
     public readonly Field7Bit Ack1;
 

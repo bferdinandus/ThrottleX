@@ -8,24 +8,24 @@ namespace Loconet.Msg;
 
 public class MessageLookup : MessageEnumerator
 {
-    private readonly Dictionary<(byte Opcode, byte Length), (bool IsVariableLength, Type type)> _table = [];
+    private readonly Dictionary<(byte Opcode, byte Length), Type> _table = [];
 
-    public IEnumerable<Type> EnumerateTypes => _table.Values.Select(p => p.type);
-    public IEnumerable<(byte, byte, bool, Type)> EnumerateAll => _table.Select(pair => (pair.Key.Opcode, pair.Key.Length, pair.Value.IsVariableLength, pair.Value.type));
+    public IEnumerable<Type> EnumerateTypes => _table.Values;
+    public IEnumerable<(byte opcode, byte length, Type type)> EnumerateAll => _table.Select(pair => (pair.Key.Opcode, pair.Key.Length, pair.Value));
 
-    protected override void AddMessage(byte opcode, byte length, bool isVariableLength, Type type)
+    protected override void AddMessage(byte opcode, byte length, Type type)
     {
-        _table.Add((opcode, length), (isVariableLength, type));
+        _table.Add((opcode, length), type);
     }
 
     public FormatBase? ParseMessage(byte[] msg)
     {
         var opcodeAndLength = (msg[0], (byte)msg.Length);
 
-        if (!_table.TryGetValue(opcodeAndLength, out var format))
+        if (!_table.TryGetValue(opcodeAndLength, out var formatType))
             return null;
 
-        var formatInstance = format.type?.GetConstructor([])?.Invoke([]);
+        var formatInstance = formatType?.GetConstructor([])?.Invoke([]);
 
         if (formatInstance == null) // Message format is unknown (or worse).
             return null;

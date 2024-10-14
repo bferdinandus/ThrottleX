@@ -8,8 +8,6 @@ public class SlotStat1 : FormatBase, ILoconetMessageFormat
 
     public static byte Length => 4;
 
-    public static bool IsVariableLength => false;
-
     public readonly Field7Bit Slot;
 
     public readonly BitField7Bit<ESlotStatus1> Stat1;
