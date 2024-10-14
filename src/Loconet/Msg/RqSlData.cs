@@ -11,10 +11,13 @@ public class RqSlData : FormatBase, ILoconetMessageFormat
     public static byte Length => 4;
     public static bool IsVariableLength => false;
 
-    public readonly Field7Bit Slot;
+    public readonly ConstantField Spare = new(1, 0);
+    public readonly Field7Bit Slot = new(2);
+
+    public RqSlData() { }
 
     public RqSlData(byte slot)
     {
-        Slot = new(this, 2);
+        Slot.Value = slot;
     }
 }

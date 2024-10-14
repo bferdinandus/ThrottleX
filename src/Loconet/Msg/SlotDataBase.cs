@@ -70,17 +70,17 @@ public class SlotDataBase : FormatBase
 
     protected SlotDataBase() 
     {
-        Slot = new(this, 2);
-        Stat = new(this, 3);
-        Adr  = new(this, 4);
-        Spd  = new(this, 5);
-        Dirf = new(this, 6);
-        Trk  = new(this, 7);
-        SS2  = new(this, 8);
-        Adr2 = new(this, 9);
-        Snd  = new(this, 10);
-        Id1  = new(this, 11);
-        Id2  = new(this, 12);
+        Slot = new(2);
+        Stat = new(3);
+        Adr  = new(4);
+        Spd  = new(5);
+        Dirf = new(6);
+        Trk  = new(7);
+        SS2  = new(8);
+        Adr2 = new(9);
+        Snd  = new(10);
+        Id1  = new(11);
+        Id2  = new(12);
 
         StatBusyActive = BitGroupAccessEnum<ESlotStatusBusyActive>.Make(Stat, ESlotStatus1.Active, ESlotStatus1.Busy);
     }

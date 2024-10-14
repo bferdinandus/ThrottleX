@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -13,11 +14,19 @@ namespace Loconet.Msg;
 /// </summary>
 public abstract class FormatBase : ReceivableLoconetMessage
 {
-    private readonly List<Field7Bit> _fields = new();
+    public IEnumerable<FieldInfo> EnumerateFieldInfos
+    {
+        get => GetType().GetFields().Where(f => f.FieldType.IsAssignableTo(typeof(Field7Bit)));
+    }
+
+    public IEnumerable<Field7Bit> EnumerateFields
+    {
+        get => EnumerateFieldInfos.Select(fi => (Field7Bit) fi!.GetValue(this)!);
+    }
 
     public void Decode(byte[] data)
     {
-        foreach (var field in _fields)
+        foreach (var field in EnumerateFields)
         {
             field.Value = data[field.Index];
         }
@@ -32,7 +41,7 @@ public abstract class FormatBase : ReceivableLoconetMessage
         if (T.IsVariableLength)
             msg[1] = T.Length;
 
-        foreach (var field in _fields)
+        foreach (var field in EnumerateFields)
         {
             msg[field.Index] = field.Value;
         }
@@ -43,10 +52,5 @@ public abstract class FormatBase : ReceivableLoconetMessage
         msg[T.Length - 1] = check;
 
         return msg;
-    }
-
-    public void AddField(Field7Bit field7Bit)
-    {
-        _fields.Add(field7Bit);
     }
 }

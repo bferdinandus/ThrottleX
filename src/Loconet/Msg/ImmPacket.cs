@@ -35,6 +35,7 @@ public class ImmPacket : FormatBase, ILoconetMessageFormat
         Im5_7=0x10
     }
 
+    public readonly ConstantField Spare;
     public readonly BitField7Bit<EReps> Reps;
     public readonly BitField7Bit<EDataHighBits> Dhi;
     public readonly Field7Bit Im1;
@@ -53,15 +54,15 @@ public class ImmPacket : FormatBase, ILoconetMessageFormat
 
     public ImmPacket()
     {
-        _ = new ConstantField(this, 2, 0x7F);
+        Spare = new ConstantField(2, 0x7F);
 
-        Reps = new(this, 3);
-        Dhi  = new(this, 4);
-        Im1  = new(this, 5);
-        Im2  = new(this, 6);
-        Im3  = new(this, 7);
-        Im4  = new(this, 8);
-        Im5  = new(this, 9);
+        Reps = new(3);
+        Dhi  = new(4);
+        Im1  = new(5);
+        Im2  = new(6);
+        Im3  = new(7);
+        Im4  = new(8);
+        Im5  = new(9);
 
         ByteNum     = new(Bit(Reps, EReps.NumBytes0), Bit(Reps, EReps.NumBytes1), Bit(Reps, EReps.NumBytes2));
         RepeatCount = new(Bit(Reps, EReps.Count0),    Bit(Reps, EReps.Count1),    Bit(Reps, EReps.Count2));

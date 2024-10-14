@@ -2,11 +2,11 @@
 
 public abstract class MessageEnumerator  
 {
-    protected abstract void AddMessage(byte opcode, byte length, Type type);
+    protected abstract void AddMessage(byte opcode, byte length, bool isVariableLength, Type type);
 
     private void AddOne<T>() where T : FormatBase, ILoconetMessageFormat
     {
-        AddMessage(T.Opcode, T.Length, typeof(T));
+        AddMessage(T.Opcode, T.Length, T.IsVariableLength, typeof(T));
     }
 
     public MessageEnumerator()

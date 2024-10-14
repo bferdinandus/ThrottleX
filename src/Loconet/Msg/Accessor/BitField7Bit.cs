@@ -13,8 +13,8 @@ namespace Loconet.Msg.Accessor;
 /// This _could_ be multiple bits, but that means you could only set them all or nothing and reading means reading the or'ed result</typeparam>
 public class BitField7Bit<TBitMasks> : BitField7BitBase where TBitMasks : Enum
 {
-    public BitField7Bit(FormatBase msg, int index) 
-    : base(msg, index)
+    public BitField7Bit(int index) 
+    : base(index)
     {
     }
 

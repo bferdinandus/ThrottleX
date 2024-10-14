@@ -58,6 +58,7 @@ public class DigitraxD5 : FormatBase, ILoconetMessageFormat
 
     public readonly BitField7Bit<EATyp> ATyp;
     public readonly Field7Bit Slot;
+    public readonly ConstantField Spare;
     public readonly Field7Bit Data;
 
     public readonly BitGroupAccessEnum<ESlotRange> AccessSlotRange;
@@ -66,10 +67,10 @@ public class DigitraxD5 : FormatBase, ILoconetMessageFormat
     public DigitraxD5()
     {
 
-        ATyp = new(this, 1);
-        Slot = new(this, 2);
-        _ = new ConstantField(this, 3, 0x36);
-        Data = new(this, 4);
+        ATyp = new(1);
+        Slot = new(2);
+        Spare = new ConstantField(3, 0x36);
+        Data = new(4);
 
         AccessSlotRange = BitGroupAccessEnum<ESlotRange>.Make(ATyp, EATyp.Slot0, EATyp.Slot1, EATyp.Slot2);
         AccessMode      = BitGroupAccessEnum<EMode>.     Make(ATyp, EATyp.Mode0, EATyp.Mode1, EATyp.Mode2);

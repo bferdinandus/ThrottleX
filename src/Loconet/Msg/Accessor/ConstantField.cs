@@ -5,8 +5,8 @@ public class ConstantField : Field7Bit
 {
     private readonly byte _constantValue;
 
-    public ConstantField(FormatBase msg, int index, byte constantValue)
-        : base(msg, index)
+    public ConstantField(int index, byte constantValue)
+        : base(index)
     {
         _constantValue = constantValue;
     }

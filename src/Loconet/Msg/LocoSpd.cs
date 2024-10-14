@@ -21,7 +21,7 @@ public class LocoSpd : FormatBase, ILoconetMessageFormat
 
     public LocoSpd()
     {
-        Slot = new(this, 1);
-        Spd = new(this, 2);
+        Slot = new(1);
+        Spd = new(2);
     }
 }

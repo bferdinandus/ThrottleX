@@ -19,11 +19,9 @@ public class Field7Bit
     /// New instance for one byte in a LocoNet message.
     /// This constructor is intended to be called from the constructor of the FormatBase implementation.
     /// </summary>
-    /// <param name="msg">"this" reference of the FormatBase that gets this instance as member</param>
     /// <param name="index">Byte index of this field inside the message. Counting starts with zero at the opcode</param>
-    public Field7Bit(FormatBase msg, int index)
+    public Field7Bit(int index)
     {
-        msg.AddField(this);
         Index = index;
     }
 

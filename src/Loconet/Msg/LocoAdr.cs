@@ -22,7 +22,7 @@ internal class LocoAdr : FormatBase, ILoconetMessageFormat
 
     public LocoAdr()
     {
-        AdrHigh = new(this, 1);
-        Adr = new(this, 2);
+        AdrHigh = new(1);
+        Adr = new(2);
     }
 }

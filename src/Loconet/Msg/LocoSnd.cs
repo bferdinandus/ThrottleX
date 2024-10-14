@@ -16,7 +16,7 @@ public class LocoSnd : FormatBase, ILoconetMessageFormat
 
     public LocoSnd()
     {
-        Slot = new(this, 1);
-        Snd = new(this, 2);
+        Slot = new(1);
+        Snd = new(2);
     }
 }

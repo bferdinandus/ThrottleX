@@ -16,7 +16,7 @@ public class LocoDirf : FormatBase, ILoconetMessageFormat
 
     public LocoDirf()
     {
-        Slot = new(this, 1);
-        Dirf = new(this, 2);
+        Slot = new(1);
+        Dirf = new(2);
     }
 }

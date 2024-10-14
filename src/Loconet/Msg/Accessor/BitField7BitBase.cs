@@ -8,8 +8,8 @@ namespace Loconet.Msg.Accessor;
 
 public class BitField7BitBase : Field7Bit
 {
-    public BitField7BitBase(FormatBase msg, int index) 
-    : base(msg, index)
+    public BitField7BitBase(int index) 
+    : base(index)
     {
     }
 

@@ -1,9 +1,17 @@
 ﻿using Loconet.Msg;
+using Loconet.Msg.Accessor;
 
 namespace Unittests.Loconet.Msg;
 
 public class WrSlDataTest
 {
+    [Fact]
+    public void TestEnumerate()
+    {
+        var data = new WrSlData();
+        Assert.StrictEqual(11, data.EnumerateFields.Count());
+    }
+
     [Fact]
     public void TestWrSlData()
     {

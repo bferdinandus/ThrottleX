@@ -15,7 +15,7 @@ internal class LongAck : FormatBase, ILoconetMessageFormat
 
     public LongAck()
     {
-        LOpc = new(this, 1);
-        Ack1 = new(this, 2);
+        LOpc = new(1);
+        Ack1 = new(2);
     }
 }

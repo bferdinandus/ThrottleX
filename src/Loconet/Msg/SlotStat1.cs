@@ -16,7 +16,7 @@ public class SlotStat1 : FormatBase, ILoconetMessageFormat
 
     public SlotStat1()
     {
-        Slot = new(this, 1);
-        Stat1 = new(this, 2);
+        Slot = new(1);
+        Stat1 = new(2);
     }
 }
