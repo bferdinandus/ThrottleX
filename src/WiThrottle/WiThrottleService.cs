@@ -47,9 +47,10 @@ public class WiThrottleService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested) {
+        while (!stoppingToken.IsCancellationRequested) 
+        {
             TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
-            TcpClientConnection clientConnection = new() { Client = tcpClient };
+            TcpClientConnection clientConnection = new(_logger, tcpClient, stoppingToken);
 
             _clients.TryAdd(clientConnection.ClientId, clientConnection);
             _logger.LogInformation("Client connected: {remoteEndPoint}", tcpClient.Client.RemoteEndPoint);
@@ -62,33 +63,33 @@ public class WiThrottleService : BackgroundService
         byte[] buffer = new byte[1024];
         StringBuilder messageBuffer = new();
 
-        try {
-            await using NetworkStream stream = clientConnection.Client.GetStream();
-
+        try 
+        {
             // Send welcome message to the client
-            await SendMessageAsync(WelcomeMessage(), stream, stoppingToken);
+            await clientConnection.SendMessageAsync(WelcomeMessage());
 
             int bytesRead;
-            while ((bytesRead = await stream.ReadAsync(buffer, stoppingToken)) != 0) {
+            while ((bytesRead = await clientConnection.ReadAsync(buffer)) != 0) 
+            {
                 // Convert the received bytes into a string and append to the message buffer
                 string receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
                 messageBuffer.Append(receivedText);
 
-                _logger.LogDebug("Received text from {clientId}: {receivedText}", clientConnection.ClientId, receivedText);
+                _logger.LogDebug("Received text from {client}: {receivedText}", clientConnection.Name, receivedText);
 
                 // Extract and process complete messages
                 List<string> messages = ExtractCompleteMessages(ref messageBuffer);
                 foreach (string message in messages) {
-                    _logger.LogInformation("Processing message from {clientId}: `{message}`", clientConnection.ClientId, message);
-                    await HandleIncomingMessageAsync(message, stream, stoppingToken);
+                    _logger.LogInformation("Processing message from {client}: `{message}`", clientConnection.Name, message);
+                    await HandleIncomingMessageAsync(message, clientConnection);
                 }
             }
         } catch (Exception ex) {
-            _logger.LogError(ex, "Error with client {clientId}", clientConnection.ClientId);
+            _logger.LogError(ex, "Error with client {client}", clientConnection.Name);
         } finally {
             _clients.TryRemove(clientConnection.ClientId, out _);
             clientConnection.Client.Close();
-            _logger.LogInformation("Client disconnected: {clientId}", clientConnection.ClientId);
+            _logger.LogInformation("Client disconnected: {client}", clientConnection.Name);
         }
     }
 
@@ -130,7 +131,7 @@ public class WiThrottleService : BackgroundService
         return sb.ToString();
     }
 
-    private async Task HandleIncomingMessageAsync(string message, NetworkStream stream, CancellationToken stoppingToken)
+    private async Task HandleIncomingMessageAsync(string message, TcpClientConnection connection)
     {
         if (string.IsNullOrWhiteSpace(message)) {
             return;
@@ -142,8 +143,9 @@ public class WiThrottleService : BackgroundService
             case 'N': // Device Name
                 string deviceName = message[1..];
                 _logger.LogInformation("Received Name: {deviceName}", deviceName);
+                connection.Name = deviceName;
 
-                await SendMessageAsync($"*60{Environment.NewLine}", stream, stoppingToken);
+                await connection.SendMessageAsync("*60");
 
                 break;
             case 'H': // Hardware
@@ -178,8 +180,8 @@ public class WiThrottleService : BackgroundService
                         _locoTables.Locos.Add(loco);
                     }
 
-                    string response = $"M{loco.MultiThrottleInstance}+{loco.LocomotiveKey}{Constants.Separator}{Environment.NewLine}";
-                    await SendMessageAsync(response, stream, stoppingToken);
+                    string response = $"M{loco.MultiThrottleInstance}+{loco.LocomotiveKey}{Constants.Separator}";
+                    await connection.SendMessageAsync(response);
                 }
 
                 break;
@@ -189,13 +191,6 @@ public class WiThrottleService : BackgroundService
                 _logger.LogWarning("Unknown command: {command} in {message}", command, message);
                 break;
         }
-    }
-
-    private async Task SendMessageAsync(string message, NetworkStream stream, CancellationToken stoppingToken)
-    {
-        byte[] messageToSend = Encoding.UTF8.GetBytes(message);
-        await stream.WriteAsync(messageToSend, stoppingToken);
-        _logger.LogInformation("Send message: {message}", message);
     }
 
     public override async Task StopAsync(CancellationToken cancellationToken)
