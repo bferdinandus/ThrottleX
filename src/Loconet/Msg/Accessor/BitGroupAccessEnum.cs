@@ -21,7 +21,7 @@ public class BitGroupAccessEnum<TApiEnum> : BitGroupAccessUInt where TApiEnum : 
 
     public TApiEnum AsEnum
     {
-        get => (TApiEnum)(object)base.Value;
-        set => base.Value = (uint)(object)value;
+        get => (TApiEnum)Enum.ToObject(typeof(TApiEnum), base.Value);
+        set => base.Value = Convert.ToUInt32(value);
     }
 }

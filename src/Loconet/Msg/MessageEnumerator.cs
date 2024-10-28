@@ -17,6 +17,7 @@ public abstract class MessageEnumerator
         AddOne<LocoSpd>();
         AddOne<LongAck>();
         AddOne<RqSlData>();
+        AddOne<MoveSlots>();
         AddOne<SlRdData>();
         AddOne<WrSlData>();
         AddOne<ImmPacket>();

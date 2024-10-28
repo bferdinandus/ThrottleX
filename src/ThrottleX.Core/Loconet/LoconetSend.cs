@@ -1,5 +1,8 @@
 ﻿using Loconet;
 using Loconet.Msg;
+using Loconet.Msg.Accessor;
+using Shared.LocoTable;
+using Shared.Models;
 
 namespace ThrottleX.Core.Loconet;
 
@@ -120,6 +123,66 @@ public class LoconetSend : IDisposable
 
     public void NormalOperation()
     {
-        _cancellation.WaitHandle.WaitOne();// nothing to do yet
+        for(;;)
+        {
+            bool found = false;
+
+            var index = 0;
+
+            while (index < LocoTableImpl.Instance.Count)
+            {
+                if (_cancellation.IsCancellationRequested)
+                    return;
+
+                var row = LocoTableImpl.Instance[index];
+
+                switch (row.LocoRowState)
+                {
+                    case ELocoRowState.Requesting:
+                        if (!RunRequesting(row))
+                            row.FetchingFromCommandStationFailed();
+                        break;
+                    case ELocoRowState.Operational:
+                    case ELocoRowState.Inactive:
+                        break;
+                }
+
+                index++;
+            }
+
+            if (!found) // sleep a tiny moment if we did not have to do _anything_
+                _cancellation.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(10));
+        }
+    }
+    public bool RunRequesting(ILoconet2Row row)
+    {
+        var request = new LocoAdr();
+        (request.Adr.Value, request.AdrHigh.Value) = row.Address.Loconet;
+        var result = _loconetClient.SendAndWaitReply(request, out SlRdData? slotData);
+
+        if (result != LoconetClient.LoconetSendResult.Success)
+            return false;
+
+        if (slotData!.StatBusyActive.AsEnum == ESlotStatusBusyActive.IN_USE)
+        {
+            _logger.LogTrace("Address {address} found in slot {slot} is IN_USE", row.Address, slotData.Slot);
+        }
+        else
+        {
+            _logger.LogTrace("Address {address} found in slot {slot} is {state}, doing NULL_MOVE", row.Address, slotData.Slot, slotData.StatBusyActive);
+            var nullMove = new MoveSlots();
+            nullMove.Src.Value = slotData.Slot.Value;
+            nullMove.Dest.Value = slotData.Slot.Value;
+            result = _loconetClient.SendAndWaitReply(nullMove, out slotData);
+
+            if (result != LoconetClient.LoconetSendResult.Success)
+                return false;
+        }
+
+        var speed = new Speed();
+        speed.LocoNet = slotData.Spd.Value;
+        var dir = slotData.Dirf[EDirf.Dir] ? Direction.Forward : Direction.Reverse;
+        row.DeliverCommandStationState(speed, dir, []);
+        return true;
     }
 }

@@ -2,7 +2,7 @@
 
 namespace Loconet.Msg;
 
-internal class LocoAdr : FormatBase, ILoconetMessageFormat
+public class LocoAdr : FormatBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xBF;
 

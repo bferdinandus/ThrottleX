@@ -3,7 +3,7 @@
 /// <summary>
 /// Values of SL_ACTIVE and SL_BUSY in slot status 1
 /// </summary>
-public enum ESlotStatusBusyActive
+public enum ESlotStatusBusyActive : byte
 {
     /// <summary>loco adr in SLOT  	-REFRESHED</summary>
     IN_USE = 0b11,
