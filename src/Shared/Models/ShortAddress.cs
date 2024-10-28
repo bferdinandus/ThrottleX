@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace Shared.Models
 {
-    internal class ShortAddress : IAddress
+    public class ShortAddress : IAddress
     {
         public const int Largest = 127;
 
