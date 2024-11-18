@@ -2,19 +2,28 @@
 
 namespace Loconet.Msg;
 
-public class LocoDirf : FormatBase, ILoconetMessageFormat
+public class LocoDirf : LocoBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xA1;
 
     public static byte Length => 4;
 
-    public readonly Field7Bit Slot;
+    public readonly BitField7Bit<EDirf> Dirf = new(2);
 
-    public readonly BitField7Bit<EDirf> Dirf;
-
+    /// <summary>
+    /// Parameterless constructor for reflective instantiation
+    /// </summary>
     public LocoDirf()
+    { }
+
+    /// <summary>
+    /// Construct for sending with values
+    /// </summary>
+    /// <param name="slotNumber"></param>
+    /// <param name="dirf"></param>
+    public LocoDirf(byte slotNumber, byte dirf)
     {
-        Slot = new(1);
-        Dirf = new(2);
+        Slot.Value = slotNumber;
+        Dirf.Value = dirf;
     }
 }
