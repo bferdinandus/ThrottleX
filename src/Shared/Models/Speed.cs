@@ -17,7 +17,8 @@ public class Speed
     private int _speed = 0;
 
     public bool IsEmergencyStop => _speed == -1;
-    public bool IsStop => _speed == 0;
+    public bool IsNormalStop => _speed == 0;
+    public bool IsStop => IsEmergencyStop || IsNormalStop;
 
     public void SetEmergencyStop() => _speed = -1;
     public void SetStop() => _speed = 0;
@@ -33,7 +34,7 @@ public class Speed
         }
     }
 
-    public int LocoNet
+    public byte LocoNet
     {
         get
         {
@@ -42,7 +43,7 @@ public class Speed
             {
                 -1 => 1,
                 0 => 0,
-                _ => _speed + 1
+                _ => (byte)(_speed + 1)
             };
         }
         set

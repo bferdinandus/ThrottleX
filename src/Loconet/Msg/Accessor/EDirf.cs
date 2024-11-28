@@ -7,5 +7,5 @@ public enum EDirf : byte
     F1  = 0x08,
     F2  = 0x04,
     F3  = 0x02,
-    F4  = 0x01
+    F4  = 0x01,
 }

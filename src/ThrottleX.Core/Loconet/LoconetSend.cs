@@ -3,17 +3,20 @@ using Loconet.Msg;
 using Loconet.Msg.Accessor;
 using Shared.LocoTable;
 using Shared.Models;
+using ThrottleX.Core.LocoTable;
 
 namespace ThrottleX.Core.Loconet;
 
 public class LoconetSend : IDisposable
 {
+    private readonly ILoconet2Table _locoTable;
     private readonly LoconetClient _loconetClient;
+    private readonly CommandStationMirror _mirror;
     private readonly CancellationTokenSource _cancellationTokenSource = new ();
     private readonly CancellationToken _cancellation;
     private readonly AutoResetEvent _wake = new (false);
-    private readonly ILogger _logger;
     private readonly Thread _thread;
+    private ILogger _logger => _loconetClient.Logger;
 
     public enum EState
     {
@@ -28,10 +31,11 @@ public class LoconetSend : IDisposable
     public EState State { private set; get; } = EState.Init;
     public CommandStation? GuessedCommandStation { private set; get; }
 
-    public LoconetSend(LoconetClient loconetClient)
+    public LoconetSend(LoconetClient loconetClient, CommandStationMirror mirror, ILoconet2Table locoTable)
     {
         _loconetClient = loconetClient;
-        _logger = _loconetClient.Logger;
+        _mirror = mirror;
+        _locoTable = locoTable;
         _cancellation = _cancellationTokenSource.Token;
         loconetClient.OnConnectionEstablished += ConnectionEstablishedHandler;
 
@@ -123,30 +127,36 @@ public class LoconetSend : IDisposable
 
     public void NormalOperation()
     {
-        for(;;)
+        while (!_cancellation.IsCancellationRequested)
         {
             bool found = false;
 
             var index = 0;
 
-            while (index < LocoTableImpl.Instance.Count)
+            while (index < _locoTable.Count)
             {
                 if (_cancellation.IsCancellationRequested)
                     return;
 
-                var row = LocoTableImpl.Instance[index];
-
+                var row = _locoTable[index];
+                var slot = _mirror[row.Address.Loconet];
+/* TODO
                 switch (row.LocoRowState)
                 {
                     case ELocoRowState.Requesting:
                         if (!RunRequesting(row))
-                            row.FetchingFromCommandStationFailed();
+                            row.FetchingFromCommandStationFailed(_loconetClient);
+                        found = true;
                         break;
+
                     case ELocoRowState.Operational:
+                        found |= RunOperational(row);
+                        break;
+
                     case ELocoRowState.Inactive:
                         break;
                 }
-
+*/
                 index++;
             }
 
@@ -154,7 +164,43 @@ public class LoconetSend : IDisposable
                 _cancellation.WaitHandle.WaitOne(TimeSpan.FromMilliseconds(10));
         }
     }
-    public bool RunRequesting(ILoconet2Row row)
+
+    private bool RunOperational(ILoconet2Row row)
+    {
+        var mirror = _mirror[row.Address.Loconet];
+
+        if (mirror == null)
+        {
+            _logger.LogError("we don't know a row for address {address}", row.Address);
+            return false;
+        }
+
+        if (mirror.IsEmergencyStopRequested(row.EmergencyStopCounter))
+        {// above function aligns mirror counter and sets spd value
+            _loconetClient.BlockingSend(new LocoSpd(mirror.SlotNumber, 1)); // emergency stop
+            return true; // TODO: do we need to delay the subsequend speed update for a moment to ensure CS sends out ESTOP to DCC?
+        }
+
+        byte requestedSpeed = row.RequestedSpeed.LocoNet;
+        if (mirror.Speed != requestedSpeed)
+        {
+            mirror.Speed = (byte)requestedSpeed;
+            _loconetClient.BlockingSend(new LocoSpd(mirror.SlotNumber, mirror.Speed));
+            return true;
+        }
+
+        byte requestedDirf = row.RequestedDirection == Direction.Forward ? (byte)EDirf.Dir : (byte)0;
+        //TODO: add functions
+        if (mirror.Dirf != requestedDirf)
+        {
+            mirror.Dirf = requestedDirf;
+            _loconetClient.BlockingSend(new LocoDirf(mirror.SlotNumber, mirror.Dirf));
+        }
+
+        return false;
+    }
+
+    private bool RunRequesting(ILoconet2Row row)
     {
         var request = new LocoAdr();
         (request.Adr.Value, request.AdrHigh.Value) = row.Address.Loconet;
@@ -166,6 +212,7 @@ public class LoconetSend : IDisposable
         if (slotData!.StatBusyActive.AsEnum == ESlotStatusBusyActive.IN_USE)
         {
             _logger.LogTrace("Address {address} found in slot {slot} is IN_USE", row.Address, slotData.Slot);
+            //TODO: check ID - if it is not ours, we either have to steal or leave the slot alone
         }
         else
         {
@@ -177,12 +224,14 @@ public class LoconetSend : IDisposable
 
             if (result != LoconetClient.LoconetSendResult.Success)
                 return false;
+
+            //TODO: write our ID into the slot
         }
 
         var speed = new Speed();
-        speed.LocoNet = slotData.Spd.Value;
+        speed.LocoNet = slotData!.Spd.Value;
         var dir = slotData.Dirf[EDirf.Dir] ? Direction.Forward : Direction.Reverse;
-        row.DeliverCommandStationState(speed, dir, []);
+        row.DeliverCommandStationState(_loconetClient.Index, new OccupySlotReply(speed, dir, []));
         return true;
     }
 }

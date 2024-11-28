@@ -1,14 +1,20 @@
-﻿using Shared.Models;
+﻿using Microsoft.Extensions.Logging;
+using Shared.LocoTable;
+using Shared.Models;
 using System.Collections;
 
-namespace Shared.LocoTable;
+namespace ThrottleX.Core.LocoTable;
 
-public class LocoTableImpl : ILoconet2Table
+public class LocoTableImpl : ILoconet2Table, IThrottle2Table
 {
-    public static LocoTableImpl Instance = new LocoTableImpl();
+    public LocoTableImpl(ILogger<LocoTableImpl> logger)
+    {
+        _logger = logger;
+    }
 
     private Dictionary<IAddress, LocoRowImpl> _rowByAddress = new();
     private List<LocoRowImpl> _growingTable = new();
+    private ILogger _logger;
 
     /// <summary>
     /// Get row by its add-sequence-index.
@@ -32,14 +38,14 @@ public class LocoTableImpl : ILoconet2Table
     /// </summary>
     /// <param name="address"></param>
     /// <returns></returns>
-    public LocoRowImpl GetRowForAddress(IAddress address)
+    public IThrottle2Row GetRowForAddress(IAddress address)
     {
         lock (this)
         {
             if (_rowByAddress.TryGetValue(address, out var row))
                 return row!;
 
-            var created = new LocoRowImpl(address);
+            var created = new LocoRowImpl(address, _logger);
             _rowByAddress[address] = created;
             _growingTable.Add(created);
             return created;

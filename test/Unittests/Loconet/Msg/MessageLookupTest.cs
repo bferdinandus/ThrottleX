@@ -45,7 +45,7 @@ public class MessageLookupTest(ITestOutputHelper _output)
             var field = (Field7Bit)fi.GetValue(uut)!;
             Assert.NotNull(field);
             if (bytes[field.Index] != null)
-                Assert.Fail($"Two fields access byte at index {field.Index}: {bytes[field.Index].Name}, {fi.Name}.");
+                Assert.Fail($"Two fields access byte at index {field.Index}: {bytes[field.Index]!.Name}, {fi.Name}.");
             
             bytes[field.Index] = fi;
         }

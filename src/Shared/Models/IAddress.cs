@@ -19,5 +19,13 @@ namespace Shared.Models
         /// Representation of an address distributed into two seven bit values
         /// </summary>
         (byte low, byte high) Loconet { get; }
+
+        public static IAddress FromLoconet(byte low, byte high)
+        {
+            if (high == 0)
+                return new ShortAddress(low);
+            else
+                return new LongAddress(low, high);
+        }
     }
 }

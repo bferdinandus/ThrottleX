@@ -7,13 +7,14 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Shared;
+using Shared.LocoTable;
 using Shared.Models;
 
 namespace WiThrottle;
 
 public class WiThrottleService : BackgroundService
 {
-    private readonly WiThrottleLocoTables _locoTables;
+    private readonly IThrottle2Table _locoTable;
     private readonly ILogger<WiThrottleService> _logger;
     private readonly WiThrottleOptions _options;
 
@@ -21,9 +22,9 @@ public class WiThrottleService : BackgroundService
     private ServiceDiscovery _serviceDiscovery = default!;
     private TcpListener _tcpListener = default!;
 
-    public WiThrottleService(WiThrottleLocoTables locoTables, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
+    public WiThrottleService(IThrottle2Table locoTable, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
     {
-        _locoTables = locoTables;
+        _locoTable = locoTable;
         _logger = logger;
         _options = options.Value;
     }
@@ -50,7 +51,7 @@ public class WiThrottleService : BackgroundService
         while (!stoppingToken.IsCancellationRequested) 
         {
             TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
-            TcpClientConnection clientConnection = new(_logger, tcpClient, stoppingToken);
+            TcpClientConnection clientConnection = new(_logger, _locoTable, tcpClient, stoppingToken);
 
             _clients.TryAdd(clientConnection.ClientId, clientConnection);
             _logger.LogInformation("Client connected: {remoteEndPoint}", tcpClient.Client.RemoteEndPoint);

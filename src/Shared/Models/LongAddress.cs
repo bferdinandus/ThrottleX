@@ -16,6 +16,15 @@ namespace Shared.Models
             ArgumentOutOfRangeException.ThrowIfGreaterThan(longAddress, Largest);
             Address = longAddress;
         }
+
+        public LongAddress(byte low, byte high)
+        {
+            ArgumentOutOfRangeException.ThrowIfZero(high, nameof(high));
+            Address = high << 7 | low;
+            ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(Address, ShortAddress.Largest);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Address, Largest);
+        }
+
         public bool IsLong => true;
 
         public int Address { get; }

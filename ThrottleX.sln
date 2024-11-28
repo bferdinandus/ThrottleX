@@ -17,13 +17,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EF36F24A-0
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ThrottleX.Core", "src\ThrottleX.Core\ThrottleX.Core.csproj", "{EF8DC1AA-3116-4203-A149-BC8CA4220909}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Loconet", "src\Loconet\Loconet.csproj", "{F8B5BAF8-A269-4C23-AD95-E64DF78A3672}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Loconet", "src\Loconet\Loconet.csproj", "{F8B5BAF8-A269-4C23-AD95-E64DF78A3672}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WiThrottle", "src\WiThrottle\WiThrottle.csproj", "{6122FA7A-DDED-4D2E-841A-324B51CD8A36}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WiThrottle", "src\WiThrottle\WiThrottle.csproj", "{6122FA7A-DDED-4D2E-841A-324B51CD8A36}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Unittests", "test\Unittests\Unittests.csproj", "{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Unittests", "test\Unittests\Unittests.csproj", "{28C1137C-CD6C-4CBB-A57F-70BA5084BE39}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shared", "src\Shared\Shared.csproj", "{AB2969AC-F360-4955-BEA6-FABE85AD3124}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shared", "src\Shared\Shared.csproj", "{AB2969AC-F360-4955-BEA6-FABE85AD3124}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

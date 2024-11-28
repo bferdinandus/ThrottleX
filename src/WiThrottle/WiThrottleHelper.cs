@@ -12,7 +12,7 @@ public static class WiThrottleHelper
         {
             'L' => new LongAddress(number),
             'S' => new ShortAddress(number),
-            _ => throw new ArgumentException(nameof(address))
+            _ => throw new ArgumentException("Must start with L or S", nameof(address))
         };
     }
 
