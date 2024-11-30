@@ -33,5 +33,10 @@ namespace Shared.Models
         {
             return Address;
         }
+
+        public override string ToString()
+        {
+            return $"short " + Address;
+        }
     }
 }

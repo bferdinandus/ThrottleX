@@ -42,5 +42,10 @@ namespace Shared.Models
         {
             return Address;
         }
+
+        public override string ToString()
+        {
+            return $"long " + Address;
+        }
     }
 }
