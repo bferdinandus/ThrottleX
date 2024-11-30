@@ -86,11 +86,13 @@ public sealed class AllLoconetsReply : IDisposable
     {
         _results[loconetClient] = Success;
         _slots[loconetClient] = slotReply;
+        Check();
     }
 
     public void SlotFailed(int loconetClient)
     {
         _results[loconetClient] = Failure;
+        Check();
     }
 
     public void SlotOccupied(int loconetClient)

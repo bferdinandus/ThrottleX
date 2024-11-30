@@ -1,4 +1,5 @@
-﻿using Shared.Models;
+﻿using Loconet.Msg;
+using Shared.Models;
 
 namespace Shared.LocoTable;
 
@@ -8,14 +9,14 @@ namespace Shared.LocoTable;
 /// </summary>
 public struct OccupySlotReply
 {
-    public Speed SlotSpeed;
-    public Direction SlotDirection;
-    public (int index, FunctionButton state)[] SlotFunctions;
+    public readonly Speed SlotSpeed = new ();
+    public readonly Direction SlotDirection;
+    public readonly (int index, FunctionButton state)[] SlotFunctions;
 
-    public OccupySlotReply(Speed speed, Direction dir, (int index, FunctionButton state)[] funcs)
+    public OccupySlotReply(SlRdData slotData) : this()
     {
-        SlotSpeed = speed;
-        SlotDirection = dir;
-        SlotFunctions = funcs;
+        SlotSpeed.LocoNet = slotData.Spd.Value;
+        //TODO SlotDirection
+        //TODO SlotFunctions
     }
 }

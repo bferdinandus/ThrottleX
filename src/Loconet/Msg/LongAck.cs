@@ -2,7 +2,7 @@
 
 namespace Loconet.Msg;
 
-internal class LongAck : FormatBase, ILoconetMessageFormat
+public class LongAck : FormatBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xB4;
 

@@ -25,7 +25,7 @@ public class SlotData
         void Check(string name, byte newValue, byte oldValue)
         {
             if (newValue != oldValue)
-                _logger.LogDebug($"field {name} changes from {oldValue:X02} to 0x{newValue:X02}");
+                _logger.LogDebug($"field {name} changes from 0x{oldValue:X02} to 0x{newValue:X02}");
         }
 
         _logger.LogInformation($"Storing new values for slot number {SlotNumber} from {slotMsg.GetType().Name}");
