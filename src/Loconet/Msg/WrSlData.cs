@@ -10,4 +10,11 @@ public class WrSlData : SlotDataBase, ILoconetMessageFormat
 {
     public static byte Opcode => 0xEF;
     public static byte Length => 14;
+
+    public WrSlData()
+    { }
+
+    public WrSlData(SlotDataBase copyFrom)
+        : base(copyFrom)
+    { }
 }
