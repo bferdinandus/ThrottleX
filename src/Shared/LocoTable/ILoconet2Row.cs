@@ -1,4 +1,5 @@
 ﻿using Shared.Models;
+using System;
 
 namespace Shared.LocoTable;
 
@@ -56,4 +57,20 @@ public interface ILoconet2Row : ICommon2Row
     /// has priority and is never skipped by a subsequent change in speed.
     /// </summary>
     int EmergencyStopCounter { get; }
+
+    /// <summary>
+    /// When we occupy the slot, this ID shall be written into it.
+    /// Plan is to set ID2=1 and use least 7 bits of IP address of wiFRED for ID1 maybe.
+    /// From locope slot data explaination:
+    /// ID1 is "7 bit ls ID code written by THROTTLE/PC when STAT2.4=1"
+    /// ID2 is "7 bit ms ID code written by THROTTLE/PC when STAT2.4=1"
+    /// From locope OPC_WR_SL_DATA:
+    /// ID1/ID2 are two 7 bit values encoding a 14 bit unique DEVICE usage ID
+    /// ID1/ID2#'s:
+    /// 00/00 	       -means NO ID being used
+    /// 01/00 to 7F/01 -ID shows PC usage.Lo nibble is TYP PC# (PC can use hi values)
+    /// 00/02 to 7F/03 -SYSTEM reserved
+    /// 00/04 to 7F/7E -NORMAL throttle RANGE
+    /// </summary>
+    (byte id1, byte id2) SlotId { get; }
 }

@@ -89,6 +89,8 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
 
     public int EmergencyStopCounter { get; private set; }
 
+    public (byte id1, byte id2) SlotId => (42, 1);//TODO: get low 7 bits of IP address?
+
     bool ILoconet2Row.IsLocoActivatedForThisLoconet(int loconetClient)
     {
         return IsActive && (_LoconetEnabled & 1 << loconetClient) != 0;
