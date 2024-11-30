@@ -15,18 +15,6 @@ public class SlotData
     public byte Id1;
     public byte Id2;
 
-    public enum ControlState
-    {
-        /// <summary>
-        /// We know about this slot only because we are received it from our loconet
-        /// </summary>
-        None = 0,
-    }
-
-    public ControlState Control { get; private set; } = ControlState.None;
-
-    private int _emergencyStopCounter = 0;
-
     public SlotData(SlotDataBase slotMsg)
     {
         Set(slotMsg);
@@ -67,25 +55,5 @@ public class SlotData
         Sound = slotMsg.Snd.Value;
         Id1 = slotMsg.Id1.Value;
         Id2 = slotMsg.Id2.Value;
-    }
-
-    /// <summary>
-    /// Did wiThrottle request an emergency stop?
-    /// 
-    /// If counter in slot and passed counter in loco table are not equal,
-    /// this function returns true and resets the local counter to the passed
-    /// counter from loco table. Nominally this can only be with the loco table
-    /// counter being ahead.
-    /// </summary>
-    /// <param name="counterInLocoTable">copy of the counter from the loco table. This is incremented when wiThrottle requests emergency stop</param>
-    /// <returns>false if both counters are equal</returns>
-    public bool IsEmergencyStopRequested(int counterInLocoTable)
-    {
-        if (counterInLocoTable == _emergencyStopCounter)
-            return false; // nothing changed, nothing to do
-
-        _emergencyStopCounter = counterInLocoTable;
-        Speed = 1;
-        return true;
     }
 }
