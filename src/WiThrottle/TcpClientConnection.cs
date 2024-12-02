@@ -190,9 +190,10 @@ public class TcpClientConnection
 
         Action<IThrottle2Row>? action = ((ThrottleCommand)cmd) switch
         {
-            ThrottleCommand.SetVelocity => row => row.SetSpeed(int.Parse(par)),
-            ThrottleCommand.SetDirection => row => row.SetDirection(ParseBinary() ? Direction.Forward : Direction.Reverse),
-            ThrottleCommand.EmergencyStop => row => row.SetEmergencyStop(),
+            ThrottleCommand.SetVelocity   =>  row => row.SetSpeed(int.Parse(par)),
+            ThrottleCommand.SetDirection  =>  row => row.SetDirection(ParseBinary() ? Direction.Forward : Direction.Reverse),
+            ThrottleCommand.EmergencyStop =>  row => row.SetEmergencyStop(),
+            ThrottleCommand.Quit          =>  row => _logger.LogInformation($"{Name} sais bye."),
             _ => null
         };
 
