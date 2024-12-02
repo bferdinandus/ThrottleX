@@ -232,7 +232,7 @@ public class TcpClientConnection
         if (locoRow.IsActive)
         {
             _logger.LogError($"got loco row for address {locoRow.Address} that is already active, refusing to steal!");
-            await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress}{Constants.Separator}");
+            await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}");
         }
 
         _logger.LogInformation($"{Name}: got loco row for address {locoRow.Address}, activating now");
@@ -248,13 +248,13 @@ public class TcpClientConnection
         {
             case OccupySlotResult.Success:
                 _logger.Log(LogLevel.Information, $"{Name}: command station success");
-                await SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress}{Constants.Separator}");
+                await SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}");
                 //TODO: send slotData.* to throttle
                 return; // finished for now
 
             case OccupySlotResult.Occupied:
                 _logger.LogError($"{Name}: Loconet sais the address {address} is already active, refusing to steal, deactivating!");
-                await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress}{Constants.Separator}");
+                await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}");
                 break; // deactivate below
 
             default: // failure
