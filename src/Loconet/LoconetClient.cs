@@ -29,6 +29,7 @@ public class LoconetClient : IDisposable
     private TcpClient? _client;
     private bool _sentError;
     private bool _nextReceiveIsReply = false;
+    private bool _interestedInReply = false;
     private ReceivableLoconetMessage? _reply;
     private string? _lastSentHex;
     public readonly ILogger Logger;
@@ -114,6 +115,11 @@ public class LoconetClient : IDisposable
 
         lock (_sentEvent) // serialize send requests, which utilize _sentEvent
         {
+            // We are here after any SENT answer and before our following SEND attempt, be it with
+            // waiting for reply or not. Resetting _nextReceiveIsReply in order to not
+            // take the echo mistakingly as a reply.
+            _nextReceiveIsReply = false;
+
             _lastSentHex = msgHex;
             _sentEvent.Reset();  // from now on a SENT triggers _sentEvent
 
@@ -164,7 +170,10 @@ public class LoconetClient : IDisposable
                 return LoconetSendResult.ReplyTimeout;
 
             if (!typeof(TExpectedReply).IsAssignableFrom(_reply!.GetType()))
+            {
+                Logger.LogWarning($"Expected reply {typeof(TExpectedReply).Name}, but received {_reply.GetType()}");
                 return LoconetSendResult.UnexpectedReply;
+            }
 
             reply = (TExpectedReply) _reply;
             return LoconetSendResult.Success;
