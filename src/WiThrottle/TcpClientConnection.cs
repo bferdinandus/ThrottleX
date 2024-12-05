@@ -280,7 +280,10 @@ public class TcpClientConnection
         }
         else // selected single loco
         {
-            action(_myLocos[address]);
+            if (_myLocos.ContainsKey(address))
+                action(_myLocos[address]);
+            else
+                _logger.LogWarning($"{Name}: loco {address} is not currently under control!?");
         }
     }
 
