@@ -250,7 +250,10 @@ public class TcpClientConnection
             case OccupySlotResult.Success:
                 _logger.Log(LogLevel.Information, $"{Name}: command station success");
                 await SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}");
-                //TODO: send slotData.* to throttle
+                var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
+                var slot = slotData!.Value; // not null in this case
+                await SendMessageAsync($"{prefix}V{slot.SlotSpeed}");
+                await SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}");
                 return; // finished for now
 
             case OccupySlotResult.Occupied:

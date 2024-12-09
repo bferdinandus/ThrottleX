@@ -80,10 +80,13 @@ public class LocoTable
     }
 }
 
+/// <summary>
+/// wiThrottle numbers for direction
+/// </summary>
 public enum Direction
 {
-    Reverse,
-    Forward
+    Reverse = 0,
+    Forward = 1,
 }
 
 public enum FunctionButton
