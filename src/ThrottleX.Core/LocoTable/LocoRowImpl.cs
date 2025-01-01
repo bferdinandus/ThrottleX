@@ -81,6 +81,20 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
         RequestedDirection = dir;
     }
 
+    void IThrottle2Row.SetFunction(int number, Shared.Models.FunctionButton state)
+    {
+        lock (RequestedFunctions)
+        {
+            string previous = RequestedFunctions.TryGetValue(number, out var previousValue)
+                ? previousValue.ToString()
+                : "unknown";
+            _logger.LogTrace($"{Address}: changing F{number} from {previous} to {state}");
+            RequestedFunctions[number] = state;
+        }
+    }
+
+    public Dictionary<int, FunctionButton> RequestedFunctions { get; } = new();
+
     public IAddress Address { get; }
 
     public Speed RequestedSpeed { get; } = new Speed();

@@ -181,18 +181,24 @@ public class TcpClientConnection
         var cmd = second[0];
         var par = second[1..];
 
-        bool ParseBinary() => par switch
+        bool ParseBinary(string parameter) => parameter switch
         {
             "0" => false,
             "1" => true,
-            _ => throw new ArgumentException(par + " must be 0 or 1", nameof(par))
+            _ => throw new ArgumentException(parameter + " must be 0 or 1", nameof(parameter))
         };
 
         Action<IThrottle2Row>? action = ((ThrottleCommand)cmd) switch
         {
             ThrottleCommand.SetVelocity   =>  row => row.SetSpeed(int.Parse(par)),
-            ThrottleCommand.SetDirection  =>  row => row.SetDirection(ParseBinary() ? Direction.Forward : Direction.Reverse),
+            ThrottleCommand.SetDirection  =>  row => row.SetDirection(ParseBinary(par) ? Direction.Forward : Direction.Reverse),
             ThrottleCommand.EmergencyStop =>  row => row.SetEmergencyStop(),
+            // for now treat f and F the same, because throttle decides which buttons are momentary or permanent
+            ThrottleCommand.ForceFunction or
+            ThrottleCommand.FunctionKey   =>  row => {   int number = int.Parse(par[1..]);
+                                                         string parameter = par[..1];
+                                                         var state = ParseBinary(parameter) ? FunctionButton.On : FunctionButton.Off;
+                                                         row.SetFunction(number, state);  },
             ThrottleCommand.Quit          =>  row => _logger.LogInformation($"{Name} sais bye."),
             _ => null
         };
@@ -252,7 +258,7 @@ public class TcpClientConnection
                 await SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}");
                 var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
                 var slot = slotData!.Value; // not null in this case
-                await SendMessageAsync($"{prefix}V{slot.SlotSpeed}");
+                await SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}");
                 await SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}");
                 return; // finished for now
 

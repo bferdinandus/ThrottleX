@@ -59,6 +59,14 @@ public interface ILoconet2Row : ICommon2Row
     int EmergencyStopCounter { get; }
 
     /// <summary>
+    /// Return a dictionary that reflects the knowledge of the throttle about functions.
+    /// Content gets initialized from LocoNet and manipulated from the throttle.
+    /// The returned object is always the one that gets instantiated on row creation and can
+    /// be used for mutual exclusion locks.
+    /// </summary>
+    Dictionary<int, FunctionButton> RequestedFunctions { get; }
+
+    /// <summary>
     /// When we occupy the slot, this ID shall be written into it.
     /// Plan is to set ID2=1 and use least 7 bits of IP address of wiFRED for ID1 maybe.
     /// From locope slot data explaination:

@@ -28,6 +28,13 @@ namespace Shared.LocoTable
         Task<(OccupySlotResult, OccupySlotReply?)> WaitForSlotsAsync(CancellationToken cancel);
 
         /// <summary>
+        /// Throttle sets a function
+        /// </summary>
+        /// <param name="number">0=F0, 1=F1, ...</param>
+        /// <param name="state"></param>
+        void SetFunction(int number, FunctionButton state);
+
+        /// <summary>
         /// Throttle set the direction
         /// </summary>
         /// <param name="dir"></param>
