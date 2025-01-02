@@ -6,8 +6,8 @@ namespace ThrottleX.Core.Pages.Components;
 public class WiFredClients : HydroComponent
 {
     public string TestString { get; set; } = "Hello World";
-    Faker<WiFredClient> _wiFredClientFaker;
-    public List<WiFredClient> Clients { get; set; } = [];
+    private Faker<WiFredClient> _wiFredClientFaker;
+    public List<WiFredClient> Clients { get; init; }
 
     public WiFredClients()
     {
@@ -17,7 +17,7 @@ public class WiFredClients : HydroComponent
             .RuleFor(x => x.MacAddress, x => x.Internet.Mac())
             .RuleFor(x => x.Locos, x => x.Random.Int(0,4))
             .RuleFor(x => x.Status, x => x.PickRandom<WiFredStatus>())
-            .RuleFor(x => x.TimeSinceLastMessage, x => x.Random.String2(5).ToString())
+            .RuleFor(x => x.TimeSinceLastMessage, x => x.Date.RecentTimeOnly().ToString())
             ;
         Clients = _wiFredClientFaker.Generate(3);
     }
@@ -29,14 +29,14 @@ public class WiFredClients : HydroComponent
 }
 
 
-public class WiFredClient()
+public class WiFredClient
 {
-    public string Name { get; init; }
-    public string Uid { get; init; }
-    public string MacAddress { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Uid { get; init; } = string.Empty;
+    public string MacAddress { get; init; } = string.Empty;
     public int Locos { get; init; }
     public WiFredStatus Status { get; init; }
-    public string TimeSinceLastMessage { get; init; }
+    public string TimeSinceLastMessage { get; init; } = string.Empty;
 
 
 }
