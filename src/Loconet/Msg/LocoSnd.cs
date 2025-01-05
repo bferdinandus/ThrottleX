@@ -9,4 +9,10 @@ public class LocoSnd : LocoBase, ILoconetMessageFormat
     public static byte Length => 4;
 
     public readonly BitField7Bit<ESlotSound> Snd = new(2);
+
+    public LocoSnd(byte slotNumber, byte snd)
+    {
+        Slot.Value = slotNumber;
+        Snd.Value = snd;
+    }
 }

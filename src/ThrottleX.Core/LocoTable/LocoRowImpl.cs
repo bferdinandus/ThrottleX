@@ -2,6 +2,7 @@
 using Microsoft.Extensions.Logging;
 using Shared.LocoTable;
 using Shared.Models;
+using System.Collections.Concurrent;
 using ThrottleX.Core.Loconet;
 
 namespace ThrottleX.Core.LocoTable;
@@ -20,6 +21,8 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
     /// single loco can be propergated.
     /// </summary>
     private readonly uint _LoconetEnabled = uint.MaxValue;
+
+    private readonly FunctionProcessing _functions = new();
 
     public bool IsActive { get; private set; }
 
@@ -47,13 +50,34 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
         try
         {
             _allLoconetsReply = new AllLoconetsReply(_logger, _LoconetEnabled);
-            return await _allLoconetsReply.WaitAsync(cancel);
+            var (Result, Reply) = await _allLoconetsReply.WaitAsync(cancel);
+            if (Reply.HasValue)
+                InitializeFromSlot(Reply.Value);
+            return (Result, Reply);
         }
         finally
         {
             _allLoconetsReply?.Dispose();
             _allLoconetsReply = null;
         }
+    }
+
+    /// <summary>
+    /// Setting previous information about speed and direction from slot.
+    /// We are not storing function state from slot only for web server display, 
+    /// because anything that comes from the throttle is queued and propagated 
+    /// to the command station without regard to any previous state. 
+    /// E.g. if wiFRED forces a function to Off we will transmit this information 
+    /// even if the slot information suggests that the function was Off before.
+    /// </summary>
+    /// <param name="value">reply from occupying the slot in the command station</param>
+    private void InitializeFromSlot(OccupySlotReply value)
+    {
+        RequestedDirection = value.SlotDirection;
+        RequestedSpeed = value.SlotSpeed;
+
+        var functionString = _functions.InitializeFromCommandStation(value.SlotFunctions);
+        _logger.LogInformation($"Initialized from command station: speed {RequestedSpeed}, {RequestedDirection}, {functionString}");
     }
 
     void IThrottle2Row.Deactivate()
@@ -81,29 +105,38 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
         RequestedDirection = dir;
     }
 
-    void IThrottle2Row.SetFunction(int number, Shared.Models.FunctionButton state)
+    void IThrottle2Row.SetFunctionKey(int number, bool newButtonState)
     {
-        lock (RequestedFunctions)
-        {
-            string previous = RequestedFunctions.TryGetValue(number, out var previousValue)
-                ? previousValue.ToString()
-                : "unknown";
-            _logger.LogTrace($"{Address}: changing F{number} from {previous} to {state}");
-            RequestedFunctions[number] = state;
-        }
+        _functions.SetFunctionKey(number, newButtonState);
     }
 
-    public Dictionary<int, FunctionButton> RequestedFunctions { get; } = new();
+    void IThrottle2Row.ForceFunction(int number, bool newFunctionState)
+    {
+        _functions.ForceFunction(number, newFunctionState);
+    }
+
+    void IThrottle2Row.SetMomentaryFunction(int number, bool newMomentaryConfig)
+    {
+        _functions.SetMomentaryFunction(number, newMomentaryConfig);
+    }
 
     public IAddress Address { get; }
 
-    public Speed RequestedSpeed { get; } = new Speed();
+    public Speed RequestedSpeed { get; private set; } = new Speed();
 
     public Direction RequestedDirection { get; private set; }
 
     public int EmergencyStopCounter { get; private set; }
 
-    public (byte id1, byte id2) SlotId => (42, 1);//TODO: get low 7 bits of IP address?
+    (byte id1, byte id2) ILoconet2Row.SlotId => (42, 1);//TODO: get low 7 bits of IP address?
+
+    /// <summary>
+    /// Dequeue from _functionQueue
+    /// </summary>
+    bool ILoconet2Row.NextRequestedFunction(out FunctionState? functionState)
+    {
+        return _functions.Dequeue(out functionState);
+    }
 
     bool ILoconet2Row.IsLocoActivatedForThisLoconet(int loconetClient)
     {

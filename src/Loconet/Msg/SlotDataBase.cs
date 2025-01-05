@@ -56,7 +56,7 @@ public class SlotDataBase : FormatBase
     /// <summary>
     /// "Slot sound" contains F5..F8
     /// </summary>
-    public readonly Field7Bit Snd = new(10);
+    public readonly BitField7Bit<ESlotSound> Snd = new(10);
 
     /// <summary>
     /// First byte of device ID

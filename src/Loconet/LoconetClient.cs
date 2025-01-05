@@ -29,7 +29,6 @@ public class LoconetClient : IDisposable
     private TcpClient? _client;
     private bool _sentError;
     private bool _nextReceiveIsReply = false;
-    private bool _interestedInReply = false;
     private ReceivableLoconetMessage? _reply;
     private string? _lastSentHex;
     public readonly ILogger Logger;

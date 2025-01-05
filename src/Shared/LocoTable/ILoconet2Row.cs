@@ -59,12 +59,11 @@ public interface ILoconet2Row : ICommon2Row
     int EmergencyStopCounter { get; }
 
     /// <summary>
-    /// Return a dictionary that reflects the knowledge of the throttle about functions.
-    /// Content gets initialized from LocoNet and manipulated from the throttle.
-    /// The returned object is always the one that gets instantiated on row creation and can
-    /// be used for mutual exclusion locks.
+    /// Query next requested function state.
     /// </summary>
-    Dictionary<int, FunctionButton> RequestedFunctions { get; }
+    /// <param name="functionState">null if return value is false</param>
+    /// <returns>true=a function is requested, functionState contain valid information.</returns>
+    bool NextRequestedFunction(out FunctionState? functionState);
 
     /// <summary>
     /// When we occupy the slot, this ID shall be written into it.

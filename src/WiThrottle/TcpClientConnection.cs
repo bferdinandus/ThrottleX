@@ -188,18 +188,25 @@ public class TcpClientConnection
             _ => throw new ArgumentException(parameter + " must be 0 or 1", nameof(parameter))
         };
 
+        (int number, bool state) ParseFunction()
+        {
+            var number = int.Parse(par[1..]);
+            var state = ParseBinary(par[..1]);
+            return (number, state);
+        }
+
         Action<IThrottle2Row>? action = ((ThrottleCommand)cmd) switch
         {
-            ThrottleCommand.SetVelocity   =>  row => row.SetSpeed(int.Parse(par)),
-            ThrottleCommand.SetDirection  =>  row => row.SetDirection(ParseBinary(par) ? Direction.Forward : Direction.Reverse),
-            ThrottleCommand.EmergencyStop =>  row => row.SetEmergencyStop(),
-            // for now treat f and F the same, because throttle decides which buttons are momentary or permanent
-            ThrottleCommand.ForceFunction or
-            ThrottleCommand.FunctionKey   =>  row => {   int number = int.Parse(par[1..]);
-                                                         string parameter = par[..1];
-                                                         var state = ParseBinary(parameter) ? FunctionButton.On : FunctionButton.Off;
-                                                         row.SetFunction(number, state);  },
-            ThrottleCommand.Quit          =>  row => _logger.LogInformation($"{Name} sais bye."),
+            ThrottleCommand.SetVelocity      =>  row => row.SetSpeed(int.Parse(par)),
+            ThrottleCommand.SetDirection     =>  row => row.SetDirection(ParseBinary(par) ? Direction.Forward : Direction.Reverse),
+            ThrottleCommand.EmergencyStop    =>  row => row.SetEmergencyStop(),
+            ThrottleCommand.FunctionKey      =>  row => {   var (number, state) = ParseFunction();
+                                                            row.SetFunctionKey(number, state);  },
+            ThrottleCommand.ForceFunction    =>  row => {   var (number, state) = ParseFunction();
+                                                            row.ForceFunction(number, state);  },
+            ThrottleCommand.MomentaryFunction=>  row => {   var (number, state) = ParseFunction();
+                                                            row.SetMomentaryFunction(number, state);  },
+            ThrottleCommand.Quit             =>  row => _logger.LogInformation($"{Name} sais bye."),
             _ => null
         };
 
@@ -260,6 +267,7 @@ public class TcpClientConnection
                 var slot = slotData!.Value; // not null in this case
                 await SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}");
                 await SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}");
+                //TODO forward functions
                 return; // finished for now
 
             case OccupySlotResult.Occupied:

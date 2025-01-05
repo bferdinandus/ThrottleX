@@ -205,20 +205,30 @@ public class LoconetSend : IDisposable
         byte requestedSpeed = row.RequestedSpeed.LocoNet;
         if (slot.LastSentSpeed.HasValue && slot.LastSentSpeed.Value != requestedSpeed)
         {
+            _logger.LogDebug($"{row.Address}: sending speed: {requestedSpeed}");
             slot.SendSpeed(requestedSpeed);
             return true;
         }
 
-        byte requestedDirf = row.RequestedDirection == Direction.Forward ? (byte)EDirf.Dir : (byte)0;
-        //TODO: add functions
-        if (slot.LastSentDirf.HasValue && slot.LastSentDirf!.Value != requestedDirf)
+        var lastSentDirection = (slot.LastSentDirf & (byte)EDirf.Dir) != 0 ? Direction.Forward : Direction.Reverse;
+        var requestedDirection = row.RequestedDirection;
+        if (lastSentDirection != requestedDirection)
         {
-            slot.SendDirf(requestedDirf);
+            _logger.LogDebug($"{row.Address}: sending direction: {requestedDirection}");
+            slot.SendDirf(EDirf.Dir, requestedDirection == Direction.Forward);
+            return true;
+        }
+
+        if (row.NextRequestedFunction(out var state))
+        {
+            _logger.LogDebug($"{row.Address}: sending function: {state}");
+            slot.SendFunction(state!.Number, state!.IsOn);
             return true;
         }
 
         return false;
     }
+
 
     private SlotControl.State Deactivate(SlotControl slot)
     {

@@ -28,17 +28,33 @@ namespace Shared.LocoTable
         Task<(OccupySlotResult, OccupySlotReply?)> WaitForSlotsAsync(CancellationToken cancel);
 
         /// <summary>
-        /// Throttle sets a function
+        /// Throttle sets a function button state with F command
         /// </summary>
         /// <param name="number">0=F0, 1=F1, ...</param>
-        /// <param name="state"></param>
-        void SetFunction(int number, FunctionButton state);
+        /// <param name="newButtonState">parameter of the wiThrottle function command is the 
+        /// new button state - this method performs the change in function state according 
+        /// to configured IsMomentary</param>
+        void SetFunctionKey(int number, bool newButtonState);
+
+        /// <summary>
+        /// Throttle forces a function state with f command
+        /// </summary>
+        /// <param name="number">0=F0, 1=F1, ...</param>
+        /// <param name="newFunctionState">parameter of the wiThrottle force function command 
+        /// is the forced new function state</param>
+        void ForceFunction(int number, bool newFunctionState);
+
+        /// <summary>
+        /// Throttle configures how function button works with m command
+        /// </summary>
+        /// <param name="number">0=F0, 1=F1, ...</param>
+        /// <param name="newMomentaryConfig">true=momentary, false=locked</param>
+        void SetMomentaryFunction(int number, bool newMomentaryConfig);
 
         /// <summary>
         /// Throttle set the direction
         /// </summary>
         /// <param name="dir"></param>
-        /// <returns></returns>
         void SetDirection(Direction dir);
 
         /// <summary>
