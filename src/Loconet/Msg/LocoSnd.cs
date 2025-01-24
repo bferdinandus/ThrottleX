@@ -10,6 +10,17 @@ public class LocoSnd : LocoBase, ILoconetMessageFormat
 
     public readonly BitField7Bit<ESlotSound> Snd = new(2);
 
+    /// <summary>
+    /// Parameterless constructor for reflective instantiation
+    /// </summary>
+    public LocoSnd()
+    { }
+
+    /// <summary>
+    /// Construct for sending with values
+    /// </summary>
+    /// <param name="slotNumber"></param>
+    /// <param name="snd"></param>
     public LocoSnd(byte slotNumber, byte snd)
     {
         Slot.Value = slotNumber;
