@@ -23,5 +23,6 @@ public abstract class MessageEnumerator
         AddOne<WrSlData>();
         AddOne<ImmPacket>();
         AddOne<DigitraxD5>();
+        AddOne<UhlenbrockD4>();
     }
 }
