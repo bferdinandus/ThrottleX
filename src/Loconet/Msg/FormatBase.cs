@@ -16,7 +16,8 @@ public abstract class FormatBase : ReceivableLoconetMessage
 {
     public IEnumerable<FieldInfo> EnumerateFieldInfos
     {
-        get => GetType().GetFields().Where(f => f.FieldType.IsAssignableTo(typeof(Field7Bit)));
+        get => GetType().GetFields(BindingFlags.Public|BindingFlags.NonPublic|BindingFlags.Instance)
+                        .Where(f => f.FieldType.IsAssignableTo(typeof(Field7Bit)));
     }
 
     public IEnumerable<Field7Bit> EnumerateFields
