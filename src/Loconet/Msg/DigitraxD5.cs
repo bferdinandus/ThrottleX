@@ -37,9 +37,9 @@ public class DigitraxD5 : FormatBase, ILoconetMessageFormat
 
     public enum ESlotRange
     {
-        Slot0to119,
-        Slot120to239,
-        Slot240to369
+        Slot0to119   = 0b001,
+        Slot120to239 = 0b010,
+        Slot240to369 = 0b100
     }
 
     public enum EMode
@@ -54,22 +54,16 @@ public class DigitraxD5 : FormatBase, ILoconetMessageFormat
         F28off = 7,
     }
 
-    public readonly BitField7Bit<EATyp> ATyp;
-    public readonly Field7Bit Slot;
-    public readonly ConstantField Spare;
-    public readonly Field7Bit Data;
+    public readonly BitField7Bit<EATyp> ATyp = new(1);
+    public readonly Field7Bit Slot = new(2);
+    public readonly ConstantField Sparee = new ConstantField(3, 0x36);
+    public readonly Field7Bit Data = new(4);
 
     public readonly BitGroupAccessEnum<ESlotRange> AccessSlotRange;
     public readonly BitGroupAccessEnum<EMode> AccessMode;
 
     public DigitraxD5()
     {
-
-        ATyp = new(1);
-        Slot = new(2);
-        Spare = new ConstantField(3, 0x36);
-        Data = new(4);
-
         AccessSlotRange = BitGroupAccessEnum<ESlotRange>.Make(ATyp, EATyp.Slot0, EATyp.Slot1, EATyp.Slot2);
         AccessMode      = BitGroupAccessEnum<EMode>.     Make(ATyp, EATyp.Mode0, EATyp.Mode1, EATyp.Mode2);
     }
