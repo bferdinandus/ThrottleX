@@ -54,6 +54,22 @@ public class DigitraxD5 : FormatBase, ILoconetMessageFormat
         F28off = 7,
     }
 
+    /// <summary>
+    /// Factory method to populate message for F0 through F6.
+    /// </summary>
+    /// <param name="slot">LSBs (and only bits for us) of slot</param>
+    /// <param name="payload">LSB is F0</param>
+    /// <returns>new instance, ready for transmission</returns>
+    public static DigitraxD5 MakeF0toF6(byte slot, byte payload)
+    {
+        var msg = new DigitraxD5();
+        msg.AccessMode.AsEnum = EMode.F0toF6;
+        msg.AccessSlotRange.AsEnum = ESlotRange.Slot0to119;
+        msg.Slot.Value = slot;
+        msg.Data.Value = payload;
+        return msg;
+    }
+
     public readonly BitField7Bit<EATyp> ATyp = new(1);
     public readonly Field7Bit Slot = new(2);
     public readonly ConstantField Sparee = new ConstantField(3, 0x36);
