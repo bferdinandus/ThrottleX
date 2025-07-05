@@ -210,12 +210,12 @@ public class LoconetSend : IDisposable
             return true;
         }
 
-        var lastSentDirection = (slot.LastSentDirf & (byte)EDirf.Dir) != 0 ? Direction.Forward : Direction.Reverse;
+        var lastSentDirection = (slot.LastSentDirf & (byte)EDirf.Dir) == 0 ? Direction.Forward : Direction.Reverse;
         var requestedDirection = row.RequestedDirection;
         if (lastSentDirection != requestedDirection)
         {
-            _logger.LogDebug($"{row.Address}: sending direction: {requestedDirection}");
-            slot.SendDirf(EDirf.Dir, requestedDirection == Direction.Forward);
+            _logger.LogDebug("{RowAddress}: sending direction: {RequestedDirection}", row.Address, requestedDirection);
+            slot.SendDirf(EDirf.Dir, requestedDirection != Direction.Forward);
             return true;
         }
 

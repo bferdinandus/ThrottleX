@@ -23,9 +23,9 @@ public static class Helpers
     public static Direction ToDirection(this BitField7Bit<EDirf> dirf)
     {
         if (dirf[EDirf.Dir])
-            return Direction.Forward;
-        else
             return Direction.Reverse;
+        else
+            return Direction.Forward;
     }
 
     public static void SetDirection(this BitField7Bit<EDirf> dirf, Direction direction)
