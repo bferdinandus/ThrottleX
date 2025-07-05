@@ -38,7 +38,7 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
     void IThrottle2Row.Activate()
     {
         if (IsActive)
-            _logger.LogWarning($"Activating again {Address}");
+            _logger.LogWarning("Activating again {Address}", Address);
         IsActive = true;
     }
 
@@ -77,13 +77,13 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
         RequestedSpeed = value.SlotSpeed;
 
         var functionString = _functions.InitializeFromCommandStation(value.SlotFunctions);
-        _logger.LogInformation($"Initialized from command station: speed {RequestedSpeed}, {RequestedDirection}, {functionString}");
+        _logger.LogInformation("Initialized from command station: speed {Speed}, {Direction}, {FunctionString}", RequestedSpeed, RequestedDirection, functionString);
     }
 
     void IThrottle2Row.Deactivate()
     {
         if (!IsActive)
-            _logger.LogWarning($"Deactivating again {Address}");
+            _logger.LogWarning("Deactivating again {Address}", Address);
         EmergencyStopCounter++;  // stop the loco, now that we don't want to control it any longer
         IsActive = false;
     }
@@ -149,7 +149,7 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
 
         if (pending == null)
         {
-            _logger.LogWarning($"{msg} the slot for address {Address}, but we are not waiting for this reply (state={(IsActive ? "Active" : "Inactive")}");
+            _logger.LogWarning("{Msg} the slot for address {Address}, but we are not waiting for this reply (state={State}", msg, Address, IsActive ? "Active" : "Inactive");
         }
         else
         {

@@ -84,7 +84,7 @@ public class CommandStationMirror
 
         void Change(byte newValue, ref byte slotValue)
         {
-            _logger.LogInformation($"Received loconet message {name} for slot {slotNumber}, changing from 0x{slotValue:X02} to 0x{newValue:X02}");
+            _logger.LogInformation("Received loconet message {Name} for slot {SlotNumber}, changing from 0x{SlotValue:X02} to 0x{NewValue:X02}", name, slotNumber, slotValue, newValue);
             slotValue = newValue;
         }
 

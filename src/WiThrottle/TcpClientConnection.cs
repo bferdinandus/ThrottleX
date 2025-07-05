@@ -220,7 +220,7 @@ public class TcpClientConnection
     {
         if (address!=null && !_myLocos.ContainsKey(address))
         {
-            _logger.LogWarning($"Throttle wants so remove an address that we don't have under control, ignoring this!");
+            _logger.LogWarning("Throttle wants so remove an address that we don't have under control, ignoring this!");
             return;
         }
 
@@ -245,11 +245,11 @@ public class TcpClientConnection
         var locoRow = _locoTable.GetRowForAddress(address);
         if (locoRow.IsActive)
         {
-            _logger.LogError($"got loco row for address {locoRow.Address} that is already active, refusing to steal!");
+            _logger.LogError("got loco row for address {LocoRowAddress} that is already active, refusing to steal!", locoRow.Address);
             await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}");
         }
 
-        _logger.LogInformation($"{Name}: got loco row for address {locoRow.Address}, activating now");
+        _logger.LogInformation("{Name}: got loco row for address {LocoRowAddress}, activating now", Name, locoRow.Address);
 
         lock (_locoTable) // lock scope is entire table in order to synchronize with cleanup thread
         {
@@ -261,7 +261,7 @@ public class TcpClientConnection
         switch (csResult)
         {
             case OccupySlotResult.Success:
-                _logger.Log(LogLevel.Information, $"{Name}: command station success");
+                _logger.Log(LogLevel.Information, "{Name}: command station success", Name);
                 await SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}");
                 var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
                 var slot = slotData!.Value; // not null in this case
@@ -271,12 +271,12 @@ public class TcpClientConnection
                 return; // finished for now
 
             case OccupySlotResult.Occupied:
-                _logger.LogError($"{Name}: Loconet sais the address {address} is already active, refusing to steal, deactivating!");
+                _logger.LogError("{Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Name, address);
                 await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}");
                 break; // deactivate below
 
             default: // failure
-                _logger.LogWarning($"{Name}: command station failure for address {address}, deactivating");
+                _logger.LogWarning("{Name}: command station failure for address {Address}, deactivating", Name, address);
                 //TODO: what to answer for failure???
                 break; // deactivate below
         }
@@ -300,7 +300,7 @@ public class TcpClientConnection
             if (_myLocos.ContainsKey(address))
                 action(_myLocos[address]);
             else
-                _logger.LogWarning($"{Name}: loco {address} is not currently under control!?");
+                _logger.LogWarning("{Name}: loco {Address} is not currently under control!?", Name, address);
         }
     }
 

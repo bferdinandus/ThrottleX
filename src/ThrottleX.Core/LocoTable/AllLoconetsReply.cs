@@ -33,7 +33,7 @@ public sealed class AllLoconetsReply : IDisposable
 
     private void Log()
     {
-        _logger.LogDebug($"Waiting for reply: " + string.Join(", ", _results));
+        _logger.LogDebug($"Waiting for reply: {string.Join(", ", _results)}");
     }
 
     public async Task<(OccupySlotResult result, OccupySlotReply? slot)> WaitAsync(CancellationToken cancel)

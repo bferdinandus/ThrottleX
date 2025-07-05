@@ -83,7 +83,7 @@ public class LoconetSend : IDisposable
             catch (Exception ex)
             {
                 State = EState.Exception;
-                _logger.LogError(ex, $"Caught exception in Loconet send thread, waiting {SendWait.TotalSeconds}s and retrying to go to normal operation...");
+                _logger.LogError(ex, "Caught exception in Loconet send thread, waiting {SendWaitTotalSeconds}s and retrying to go to normal operation...", SendWait.TotalSeconds);
                 _cancellation.WaitHandle.WaitOne(SendWait);
             }
         }
@@ -109,22 +109,22 @@ public class LoconetSend : IDisposable
 
         var rqSlData = new RqSlData(0);
 
-        var success = _loconetClient.SendAndWaitReply(rqSlData, out SlRdData? reply);
+        var loconetSendResult = _loconetClient.SendAndWaitReply(rqSlData, out SlRdData? reply);
 
-        if (success == LoconetClient.LoconetSendResult.Success)
+        if (loconetSendResult == LoconetClient.LoconetSendResult.Success)
         {
-            _logger.LogDebug($"Reply is {reply}");
+            _logger.LogDebug("Reply is {reply}", reply);
             foreach (var tuple in CommandStation.Evaluate(reply!))
             {
-                _logger.LogDebug($"{tuple.percent}% for {tuple.cs.Title}");
+                _logger.LogDebug("{Percent}% for {Title}", tuple.percent, tuple.cs.Title);
             }
 
             GuessedCommandStation = CommandStation.Guess(reply!);
-            _logger.LogInformation($"Guessing this command station is {GuessedCommandStation}");
+            _logger.LogInformation("Guessing this command station is {CommandStation}", GuessedCommandStation);
         }
         else
         {
-            _logger.LogInformation($"Failed to query system slot: {success}");
+            _logger.LogInformation("Failed to query system slot: {LoconetSendResult}", loconetSendResult);
         }
     }
 
@@ -205,7 +205,7 @@ public class LoconetSend : IDisposable
         byte requestedSpeed = row.RequestedSpeed.LocoNet;
         if (slot.LastSentSpeed.HasValue && slot.LastSentSpeed.Value != requestedSpeed)
         {
-            _logger.LogDebug($"{row.Address}: sending speed: {requestedSpeed}");
+            _logger.LogDebug("{RowAddress}: sending speed: {RequestedSpeed}", row.Address, requestedSpeed);
             slot.SendSpeed(requestedSpeed);
             return true;
         }
@@ -221,7 +221,7 @@ public class LoconetSend : IDisposable
 
         if (row.NextRequestedFunction(out var state))
         {
-            _logger.LogDebug($"{row.Address}: sending function: {state}");
+            _logger.LogDebug("{RowAddress}: sending function: {FunctionState}", row.Address, state);
             slot.SendFunction(state!.Number, state!.IsOn);
             return true;
         }

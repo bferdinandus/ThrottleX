@@ -109,7 +109,7 @@ public class LoconetClient : IDisposable
 
     private LoconetSendResult BlockingSend(string msgHex)
     {
-        Logger.LogTrace($"Sending msg {msgHex}");
+        Logger.LogTrace("Sending msg {MsgHex}", msgHex);
         var line = Encoding.ASCII.GetBytes($"SEND {msgHex}\r\n");
 
         lock (_sentEvent) // serialize send requests, which utilize _sentEvent
@@ -128,7 +128,7 @@ public class LoconetClient : IDisposable
             }
             catch (Exception ex)
             {
-                Logger.LogWarning(ex, $"Failed to send, returning SocketeError");
+                Logger.LogWarning(ex, "Failed to send, returning SocketError");
                 return LoconetSendResult.SocketError;
             }
 
@@ -170,7 +170,7 @@ public class LoconetClient : IDisposable
 
             if (!typeof(TExpectedReply).IsAssignableFrom(_reply!.GetType()))
             {
-                Logger.LogWarning($"Expected reply {typeof(TExpectedReply).Name}, but received {_reply.GetType()}");
+                Logger.LogWarning("Expected reply {Name}, but received {Type}", typeof(TExpectedReply).Name, _reply.GetType());
                 return LoconetSendResult.UnexpectedReply;
             }
 
@@ -190,7 +190,7 @@ public class LoconetClient : IDisposable
                 try
                 {
                     State = LoconetState.Connect;
-                    Logger.LogInformation($"Connecting to {PeerName}");
+                    Logger.LogInformation("Connecting to {PeerName}", PeerName);
                     _client = new TcpClient(Host, Port);
 
                     State = LoconetState.Init;
@@ -202,7 +202,7 @@ public class LoconetClient : IDisposable
                     while (!_cancellation.IsCancellationRequested)
                     {
                         var s = ReceiveLineIntoBuffer();
-                        Logger.LogTrace($"Received '{s}' from {PeerName}");
+                        Logger.LogTrace("Received '{S}' from {PeerName}", s, PeerName);
                         ProcessLine(s);
                     }
                 }
@@ -212,16 +212,16 @@ public class LoconetClient : IDisposable
                 }
                 catch (EofException) 
                 {
-                    Logger.LogTrace($"EOF in receive thread, waiting {RetryWait.TotalSeconds}s and retrying to connect... ({PeerName})");
+                    Logger.LogTrace("EOF in receive thread, waiting {RetryWaitTotalSeconds}s and retrying to connect... ({PeerName})", RetryWait.TotalSeconds, PeerName);
                 }
                 catch (Exception ex)
                 {
                     if (_cancellation.IsCancellationRequested)
                     {
-                        Logger.LogDebug($"Ignoring {ex.GetType().Name} while shutting down");
+                        Logger.LogDebug("Ignoring {Name} while shutting down", ex.GetType().Name);
                         return; // normal way to exit thread for shutdown if we were blocked reading from socket
                     }
-                    Logger.LogError(ex, $"Caught exception in Loconet receive thread, waiting {RetryWait.TotalSeconds}s and retrying to connect... ({PeerName})");
+                    Logger.LogError(ex, "Caught exception in Loconet receive thread, waiting {RetryWaitTotalSeconds}s and retrying to connect... ({PeerName})", RetryWait.TotalSeconds, PeerName);
                 }
                 _client = null;
                 State = LoconetState.Wait;
@@ -249,7 +249,7 @@ public class LoconetClient : IDisposable
             switch (c)
             {
                 case -1: // eof
-                    Logger.LogInformation($"Received EOF ({PeerName})");
+                    Logger.LogInformation("Received EOF ({PeerName})", PeerName);
                     throw new EofException(); // nominal way to end receiving loop
 
                 case 13: // cr
@@ -263,7 +263,7 @@ public class LoconetClient : IDisposable
                     break;
             }
         }
-        Logger.LogInformation($"Cancelled ({PeerName})");
+        Logger.LogInformation("Cancelled ({PeerName})", PeerName);
         throw new OperationCanceledException(); // nominal way to end thread for shutdown
     }
 
@@ -287,13 +287,13 @@ public class LoconetClient : IDisposable
                 case "BREAK": OnBreak(param); return;
                 case "ERROR": OnError(param); return;
                 default:
-                    Logger.LogWarning($"Ignoring unknown token '{token}'.");
+                    Logger.LogWarning("Ignoring unknown token '{Token}'.", token);
                     return;
             }
         }
         catch (Exception ex)
         {
-            Logger.LogError(ex, $"Ignoring exception for processing line from server");
+            Logger.LogError(ex, "Ignoring exception for processing line from server");
         }
     }
 
@@ -369,23 +369,23 @@ public class LoconetClient : IDisposable
 
     protected virtual void OnBreak(string param)
     {
-        Logger.LogError($"Received break: {param} ms");
+        Logger.LogError("Received break: {param} ms", param);
     }
 
     protected virtual void OnError(string param)
     {
-        Logger.LogError($"Received error: '{param}'");
+        Logger.LogError("Received error: '{param}'", param);
     }
 
     public void Start()
     {
-        Logger.LogInformation($"Starting Loconet client for {PeerName}");
+        Logger.LogInformation("Starting Loconet client for {PeerName}", PeerName);
         _receiveThread.Start();
     }
 
     public void Dispose()
     {
-        Logger.LogInformation($"Stopping Loconet client for {PeerName}");
+        Logger.LogInformation("Stopping Loconet client for {PeerName}", PeerName);
         _cancellationSource.Cancel();
         _client?.Dispose();
         _receiveThread.Join();

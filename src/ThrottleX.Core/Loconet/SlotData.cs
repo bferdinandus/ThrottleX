@@ -25,10 +25,10 @@ public class SlotData
         void Check(string name, byte newValue, byte oldValue)
         {
             if (newValue != oldValue)
-                _logger.LogDebug($"field {name} changes from 0x{oldValue:X02} to 0x{newValue:X02}");
+                _logger.LogDebug("field {Name} changes from 0x{OldValue:X02} to 0x{NewValue:X02}", name, oldValue, newValue);
         }
 
-        _logger.LogInformation($"Storing new values for slot number {SlotNumber} from {slotMsg.GetType().Name}");
+        _logger.LogInformation("Storing new values for slot number {SlotNumber} from {Name}", SlotNumber, slotMsg.GetType().Name);
 
         Check("Stat", slotMsg.Stat.Value, Status);
         Check("SS2",  slotMsg.SS2.Value,  Status2);
