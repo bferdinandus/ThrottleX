@@ -1,11 +1,11 @@
 @model ThrottleX.Core.Pages.Components.WiFredClients
-<div>
+<div class="hydro-component">
     <caption>WiFred clients</caption>
     <table>
         <tr>
             <th>Name</th>
             <th>uid</th>
-            <th>mac address</th>
+            <th>IpAddress</th>
             <th>loco(s)</th>
             <th>status</th>
             <th>time since last message</th>
@@ -15,7 +15,7 @@
             <tr>
                 <td>@client.Name</td>
                 <td>@client.Uid</td>
-                <td>@client.MacAddress</td>
+                <td><a href="http://@client.IpAddress" target="_blank">@client.IpAddress</a></td>
                 <td>@client.Locos</td>
                 <td>@client.Status</td>
                 <td>@client.TimeSinceLastMessage</td>

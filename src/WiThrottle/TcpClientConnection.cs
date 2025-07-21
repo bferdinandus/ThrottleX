@@ -13,10 +13,11 @@ namespace WiThrottle;
 
 public class TcpClientConnection
 {
-    public TcpClient Client { get; }
+    public TcpClient TcpClient { get; }
     public string ClientId { get; } = Guid.NewGuid().ToString();
     public DateTime ConnectionTime { get; } = DateTime.Now;
-    public string Name { get; internal set; }
+    public string Name { get; private set; }
+    public string Uid { get; private set; }
 
     private readonly ILogger _logger;
     private readonly CancellationToken _stoppingToken;
@@ -24,15 +25,25 @@ public class TcpClientConnection
     private readonly IThrottle2Table _locoTable;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
 
-    public TcpClientConnection(ILogger logger, IThrottle2Table locoTable, TcpClient client, CancellationToken stoppingToken)
+    public TcpClientConnection(ILogger logger, IThrottle2Table locoTable, TcpClient tcpClient, CancellationToken stoppingToken)
     {
         _logger = logger;
         _locoTable = locoTable;
-        Client = client;
+        TcpClient = tcpClient;
         _stoppingToken = stoppingToken;
 
-        _stream = Client.GetStream();
+        _stream = TcpClient.GetStream();
         Name = ClientId; // will be overwritten when client tells us its name
+    }
+
+    public string GetLocoAdresses()
+    {
+        return string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
+    }
+
+    public string GetIpAddress()
+    {
+        return (TcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString() ?? string.Empty;
     }
 
     internal async Task HandleClientAsync()
@@ -42,6 +53,8 @@ public class TcpClientConnection
 
         // Send welcome message to the client
         await SendMessageAsync("VN2.0");
+        // set required keep alive timeout
+        await SendMessageAsync("*60");
 
         int bytesRead;
         while ((bytesRead = await ReadAsync(buffer)) != 0)
@@ -103,8 +116,6 @@ public class TcpClientConnection
                 _logger.LogInformation("Received Name: {deviceName}", deviceName);
                 Name = deviceName;
 
-                await SendMessageAsync("*60");
-
                 break;
             case 'H': // Hardware
                 char subCommand = message[1];
@@ -113,6 +124,7 @@ public class TcpClientConnection
                 {
                     case 'U': // Identifier
                         string deviceIdentifier = message[2..];
+                        Uid = deviceIdentifier;
                         _logger.LogInformation("Received Uid: {deviceIdentifier}", deviceIdentifier);
                         break;
                     default:
@@ -123,6 +135,9 @@ public class TcpClientConnection
                 break;
             case 'M':
                 await MultiThrottleAsync(message);
+                break;
+            case 'Q':
+                _logger.LogInformation("{Name} says bye.", Name);
                 break;
             case '*':
                 break;
@@ -148,10 +163,10 @@ public class TcpClientConnection
 
         switch (first[0])
         {
-            case '+': await MtAddAsync   (mtIdentifier, address); break;
+            case '+': await MtAddAsync(mtIdentifier, address); break;
             case '-': await MtRemoveAsync(mtIdentifier, address); break;
             case 'A': await MtActionAsync(mtIdentifier, address, commandParts[1]); break;
-            default:  _logger.LogError($"{Name}: Received unknown command: {first[0]}"); break;
+            default: _logger.LogError("{S}: Received unknown command: {C}", Name, first[0]); break;
         }
     }
 
@@ -197,28 +212,36 @@ public class TcpClientConnection
 
         Action<IThrottle2Row>? action = ((ThrottleCommand)cmd) switch
         {
-            ThrottleCommand.SetVelocity      =>  row => row.SetSpeed(int.Parse(par)),
-            ThrottleCommand.SetDirection     =>  row => row.SetDirection(ParseBinary(par) ? Direction.Forward : Direction.Reverse),
-            ThrottleCommand.EmergencyStop    =>  row => row.SetEmergencyStop(),
-            ThrottleCommand.FunctionKey      =>  row => {   var (number, state) = ParseFunction();
-                                                            row.SetFunctionKey(number, state);  },
-            ThrottleCommand.ForceFunction    =>  row => {   var (number, state) = ParseFunction();
-                                                            row.ForceFunction(number, state);  },
-            ThrottleCommand.MomentaryFunction=>  row => {   var (number, state) = ParseFunction();
-                                                            row.SetMomentaryFunction(number, state);  },
-            ThrottleCommand.Quit             =>  row => _logger.LogInformation($"{Name} sais bye."),
+            ThrottleCommand.SetVelocity => row => row.SetSpeed(int.Parse(par)),
+            ThrottleCommand.SetDirection => row => row.SetDirection(ParseBinary(par) ? Direction.Forward : Direction.Reverse),
+            ThrottleCommand.EmergencyStop => row => row.SetEmergencyStop(),
+            ThrottleCommand.FunctionKey => row =>
+            {
+                var (number, state) = ParseFunction();
+                row.SetFunctionKey(number, state);
+            },
+            ThrottleCommand.ForceFunction => row =>
+            {
+                var (number, state) = ParseFunction();
+                row.ForceFunction(number, state);
+            },
+            ThrottleCommand.MomentaryFunction => row =>
+            {
+                var (number, state) = ParseFunction();
+                row.SetMomentaryFunction(number, state);
+            },
             _ => null
         };
 
         if (action == null)
-            _logger.LogWarning($"Command '{cmd}'={(ThrottleCommand)cmd} not implemented, ignoring...");
-        else 
+            _logger.LogWarning("Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", cmd, (ThrottleCommand)cmd);
+        else
             ForSelectedRows(address, action);
     }
 
     private async Task MtRemoveAsync(char mtIdentifier, IAddress? address)
     {
-        if (address!=null && !_myLocos.ContainsKey(address))
+        if (address != null && !_myLocos.ContainsKey(address))
         {
             _logger.LogWarning("Throttle wants so remove an address that we don't have under control, ignoring this!");
             return;
@@ -288,7 +311,7 @@ public class TcpClientConnection
         }
     }
 
-    private void ForSelectedRows(IAddress? address, Action<IThrottle2Row> action) 
+    private void ForSelectedRows(IAddress? address, Action<IThrottle2Row> action)
     {
         if (address == null) // wildcard -> all my locos
         {
@@ -309,7 +332,7 @@ public class TcpClientConnection
         if (address == null)
             return _myLocos.Values;
         else
-            return [ _myLocos[address] ];
+            return [_myLocos[address]];
     }
 
     private Exception Panic(LogLevel level, string msg)

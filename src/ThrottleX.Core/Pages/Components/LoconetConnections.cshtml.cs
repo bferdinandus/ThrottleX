@@ -1,4 +1,3 @@
-using Bogus;
 using Hydro;
 using Loconet;
 using ThrottleX.Core.Loconet;

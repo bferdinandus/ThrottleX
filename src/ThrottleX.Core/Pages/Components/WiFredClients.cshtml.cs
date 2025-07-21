@@ -1,25 +1,24 @@
-using Bogus;
 using Hydro;
+using WiThrottle;
 
 namespace ThrottleX.Core.Pages.Components;
 
 public class WiFredClients : HydroComponent
 {
     public string TestString { get; set; } = "Hello World";
-    private Faker<WiFredClient> _wiFredClientFaker;
-    public List<WiFredClient> Clients { get; init; }
+    public WiFredClient[] Clients { get; init; }
 
-    public WiFredClients()
+    public WiFredClients(WiThrottleService wiThrottleService)
     {
-        _wiFredClientFaker = new Faker<WiFredClient>()
-            .RuleFor(x => x.Name, x => x.Name.FirstName())
-            .RuleFor(x => x.Uid, x => x.UniqueIndex.ToString())
-            .RuleFor(x => x.MacAddress, x => x.Internet.Mac())
-            .RuleFor(x => x.Locos, x => x.Random.Int(0,4))
-            .RuleFor(x => x.Status, x => x.PickRandom<WiFredStatus>())
-            .RuleFor(x => x.TimeSinceLastMessage, x => x.Date.RecentTimeOnly().ToString())
-            ;
-        Clients = _wiFredClientFaker.Generate(3);
+        Clients = wiThrottleService.Clients.Select(c => new WiFredClient
+        {
+            Name = c.Value.Name,
+            Uid = c.Value.Uid,
+            IpAddress = c.Value.GetIpAddress(),
+            Locos = c.Value.GetLocoAdresses(),
+            Status = WiFredStatus.Online,
+            TimeSinceLastMessage = c.Value.ConnectionTime
+        }).ToArray();
     }
 
     public void Add()
@@ -28,17 +27,14 @@ public class WiFredClients : HydroComponent
     }
 }
 
-
 public class WiFredClient
 {
     public string Name { get; init; } = string.Empty;
     public string Uid { get; init; } = string.Empty;
-    public string MacAddress { get; init; } = string.Empty;
-    public int Locos { get; init; }
+    public string IpAddress { get; init; } = string.Empty;
+    public string Locos { get; init; } = string.Empty;
     public WiFredStatus Status { get; init; }
-    public string TimeSinceLastMessage { get; init; } = string.Empty;
-
-
+    public DateTime TimeSinceLastMessage { get; init; }
 }
 
 public enum WiFredStatus

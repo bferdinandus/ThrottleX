@@ -18,7 +18,7 @@ public class WiThrottleService : BackgroundService
     private readonly ILogger<WiThrottleService> _logger;
     private readonly WiThrottleOptions _options;
 
-    private readonly ConcurrentDictionary<string, TcpClientConnection> _clients = new();
+    public ConcurrentDictionary<string, TcpClientConnection> Clients { get; } = new();
     private ServiceDiscovery _serviceDiscovery = default!;
     private TcpListener _tcpListener = default!;
 
@@ -37,9 +37,9 @@ public class WiThrottleService : BackgroundService
         _tcpListener.Start();
         _logger.LogInformation("Server started on port: {port}.", _options.Port);
 
-        // Advertise the service using mDNS / zefoConf
-        ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp", _options.Port);
-        serviceProfile.AddProperty("thisIsKey", "thisIsValue");
+        // Advertise the service using mDNS / zeroConf
+        ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp.local", _options.Port);
+        //serviceProfile.AddProperty("thisIsKey", "thisIsValue");
         _serviceDiscovery = new ServiceDiscovery();
         _serviceDiscovery.Advertise(serviceProfile);
 
@@ -53,13 +53,13 @@ public class WiThrottleService : BackgroundService
             TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
             TcpClientConnection clientConnection = new(_logger, _locoTable, tcpClient, stoppingToken);
 
-            _clients.TryAdd(clientConnection.ClientId, clientConnection);
+            Clients.TryAdd(clientConnection.ClientId, clientConnection);
             _logger.LogInformation("Client connected: {remoteEndPoint}", tcpClient.Client.RemoteEndPoint);
             _ = Task.Run(() => ClientTask(clientConnection), stoppingToken);
         }
     }
 
-    public async Task ClientTask(TcpClientConnection clientConnection)
+    private async Task ClientTask(TcpClientConnection clientConnection)
     {
         try
         {
@@ -71,8 +71,12 @@ public class WiThrottleService : BackgroundService
         }
         finally
         {
-            _clients.TryRemove(clientConnection.ClientId, out _);
-            clientConnection.Client.Close();
+            bool clientRemoveSuccess = Clients.TryRemove(clientConnection.ClientId, out _);
+            if (!clientRemoveSuccess)
+            {
+                _logger.LogWarning("Client removal {client} unsuccessful", clientConnection.Name);   
+            }
+            clientConnection.TcpClient.Close();
             _logger.LogInformation("Client disconnected: {client}", clientConnection.Name);
         }
     }
@@ -84,8 +88,8 @@ public class WiThrottleService : BackgroundService
         _serviceDiscovery.Dispose();
         _tcpListener.Stop();
 
-        foreach (TcpClientConnection client in _clients.Values) {
-            client.Client.Close();
+        foreach (TcpClientConnection client in Clients.Values) {
+            client.TcpClient.Close();
         }
 
         await base.StopAsync(cancellationToken);

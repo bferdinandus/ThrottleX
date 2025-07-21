@@ -26,8 +26,9 @@ public class Startup
 
         // Configure and add WiThrottleService
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
-        services.AddHostedService<WiThrottleService>();
-
+        services.AddSingleton<WiThrottleService>();
+        services.AddHostedService(p => p.GetRequiredService<WiThrottleService>());
+            
         var loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
         //services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
         services.AddHostedService(sp => new LoconetService(sp.GetService<ILogger<LoconetService>>(), sp.GetService<ILoconet2Table>()!, loconetConfig));
