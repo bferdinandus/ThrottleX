@@ -1,14 +1,11 @@
 ﻿using System.Collections.Concurrent;
 using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using Makaretu.Dns;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shared;
 using Shared.LocoTable;
-using Shared.Models;
 
 namespace WiThrottle;
 
@@ -38,17 +35,37 @@ public class WiThrottleService : BackgroundService
         _logger.LogInformation("Server started on port: {port}.", _options.Port);
 
         // Advertise the service using mDNS / zeroConf
-        ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp.local", _options.Port);
-        //serviceProfile.AddProperty("thisIsKey", "thisIsValue");
+        /*var mdns = new MulticastService();
+
+
+        List<ServiceProfile> serviceProfiles = MulticastService.GetIPAddresses()
+            .Where(ipAddress => ipAddress.AddressFamily == AddressFamily.InterNetwork)
+            .Select(ipAddress => new ServiceProfile("Fremo WiThrottle", "_withrottle._tcp", _options.Port, [ipAddress]))
+            .ToList();*/
+
+        var foundNetworkInterface = MulticastService
+            .GetNetworkInterfaces()
+            .FirstOrDefault(i => i.Name.Equals(_options.NetworkInterfaceName, StringComparison.OrdinalIgnoreCase));
+
+        IEnumerable<IPAddress> ipAddresses = null!;
+        if (foundNetworkInterface is not null)
+        {
+            ipAddresses = foundNetworkInterface.GetIPProperties().UnicastAddresses.Select(uc => uc.Address);
+        }
+
+        ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp", _options.Port, ipAddresses);
+        serviceProfile.AddProperty("thisIsKey", "thisIsValue");
         _serviceDiscovery = new ServiceDiscovery();
         _serviceDiscovery.Advertise(serviceProfile);
+        _serviceDiscovery.Announce(serviceProfile);
+
 
         return base.StartAsync(cancellationToken);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested) 
+        while (!stoppingToken.IsCancellationRequested)
         {
             TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
             TcpClientConnection clientConnection = new(_logger, _locoTable, tcpClient, stoppingToken);
@@ -74,8 +91,9 @@ public class WiThrottleService : BackgroundService
             bool clientRemoveSuccess = Clients.TryRemove(clientConnection.ClientId, out _);
             if (!clientRemoveSuccess)
             {
-                _logger.LogWarning("Client removal {client} unsuccessful", clientConnection.Name);   
+                _logger.LogWarning("Client removal {client} unsuccessful", clientConnection.Name);
             }
+
             clientConnection.TcpClient.Close();
             _logger.LogInformation("Client disconnected: {client}", clientConnection.Name);
         }
@@ -88,7 +106,8 @@ public class WiThrottleService : BackgroundService
         _serviceDiscovery.Dispose();
         _tcpListener.Stop();
 
-        foreach (TcpClientConnection client in Clients.Values) {
+        foreach (TcpClientConnection client in Clients.Values)
+        {
             client.TcpClient.Close();
         }
 
