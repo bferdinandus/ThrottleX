@@ -25,7 +25,9 @@ public class Startup
         services.AddSingleton<IThrottle2Table>(sp => sp.GetService<LocoTableImpl>()!);
 
         // Configure and add WiThrottleService
+        services.AddSingleton<WifredDeviceStore>();
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
+        
         services.AddSingleton<WiThrottleService>();
         services.AddHostedService(p => p.GetRequiredService<WiThrottleService>());
             

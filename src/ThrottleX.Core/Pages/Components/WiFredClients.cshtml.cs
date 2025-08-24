@@ -8,16 +8,16 @@ public class WiFredClients : HydroComponent
     public string TestString { get; set; } = "Hello World";
     public WiFredClient[] Clients { get; init; }
 
-    public WiFredClients(WiThrottleService wiThrottleService)
+    public WiFredClients(WifredDeviceStore deviceStore)
     {
-        Clients = wiThrottleService.Clients.Select(c => new WiFredClient
+        Clients = deviceStore.GetAllClients().Select(c => new WiFredClient
         {
-            Name = c.Value.Name,
-            Uid = c.Value.Uid,
-            IpAddress = c.Value.GetIpAddress(),
-            Locos = c.Value.GetLocoAdresses(),
-            Status = WiFredStatus.Online,
-            TimeSinceLastMessage = c.Value.ConnectionTime
+            Name = c.Name,
+            Uid = c.Id,
+            IpAddress = c.GetIpAddress(),
+            //Locos = c.GetLocoAdresses(),
+            Status = c.IsConnected ? WiFredStatus.Online : WiFredStatus.Offline,
+            TimeSinceLastMessage = c.ConnectedAt
         }).ToArray();
     }
 
