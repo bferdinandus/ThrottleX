@@ -16,11 +16,5 @@ public static class WiThrottleHelper
         };
     }
 
-    public static string EncodeWtAddress(this IAddress address)
-    {
-        if (address.IsLong)
-            return $"L{address.Address}";
-        else
-            return $"S{address.Address}";
-    }
+    public static string EncodeWtAddress(this IAddress address) => address.IsLong ? $"L{address.Address}" : $"S{address.Address}";
 }

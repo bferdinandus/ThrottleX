@@ -5,6 +5,7 @@ public enum CommandType
     Unknown,
     Name,
     Uid,
-    KeepAlive,
-    Quit
+    HeartBeat,
+    Quit,
+    MultiThrottle
 }

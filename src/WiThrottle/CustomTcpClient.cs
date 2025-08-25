@@ -23,7 +23,7 @@ public class CustomTcpClient : IDisposable
         _tcpClient = tcpClient;
         _logger = logger;
         var stream = _tcpClient.GetStream();
-        _reader = new StreamReader(stream, Encoding.UTF8);
+        _reader = new StreamReader(stream);
         _writer = new StreamWriter(stream) { AutoFlush = true };
         StartListening();
         
@@ -40,7 +40,8 @@ public class CustomTcpClient : IDisposable
                 var message = await _reader.ReadLineAsync(_cts.Token);
                 if (message == null) continue;
 
-                // a line was received, put it in the messageCannel
+                // a line was received, put it in the messageCannel so the rest of the code can read it
+                _logger.LogDebug("TcpClient put message in channel: {message}", message);
                 await _messageChannel.Writer.WriteAsync(message);
             }
         },  _cts.Token);
@@ -51,7 +52,7 @@ public class CustomTcpClient : IDisposable
         return await _messageChannel.Reader.ReadAsync(stoppingToken);
     }
 
-    public async Task WriteLineAsync(string message)
+    public async Task SendMessageAsync(string message)
     {
         if (_tcpClient.Connected)
         {

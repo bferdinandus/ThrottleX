@@ -31,13 +31,13 @@ public static class WiThrottleMessageProcessor
 
                 break;
             case 'M':
-                //await MultiThrottleAsync(message);
+                response = new WiThrottleMessage { Type = CommandType.MultiThrottle, Message = message[1..] };
                 break;
             case 'Q':
                 response = new WiThrottleMessage { Type = CommandType.Quit };
                 break;
             case '*':
-                response = new WiThrottleMessage { Type = CommandType.KeepAlive };
+                response = new WiThrottleMessage { Type = CommandType.HeartBeat };
                 break;
         }
 
