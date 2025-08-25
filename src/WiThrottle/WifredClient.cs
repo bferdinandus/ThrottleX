@@ -61,18 +61,18 @@ public class WifredClient
 
     public void UpdateConnection(CustomTcpClient client)
     {
+        if (IsConnected) Disconnect();
+        
         _tcpClient = client;
-
         ConnectedAt = DateTime.UtcNow;
     }
 
-    private void Disconnect()
+    public void Disconnect()
     {
         if (!IsConnected) return;
 
         ConnectedAt = null;
-
-        _tcpClient!.Dispose();
+        _tcpClient?.Dispose();
         _tcpClient = null!;
     }
 

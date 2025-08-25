@@ -4,14 +4,14 @@ using Shared.LocoTable;
 
 namespace WiThrottle;
 
-public class WifredDeviceStore
+public class WifredClientStore
 {
-    private readonly ILogger<WifredDeviceStore> _logger;
+    private readonly ILogger<WifredClientStore> _logger;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IThrottle2Table _locoTable;
     private readonly ConcurrentDictionary<string, WifredClient> _clients = new();
 
-    public WifredDeviceStore(ILogger<WifredDeviceStore> logger, ILoggerFactory loggerFactory, IThrottle2Table locoTable)
+    public WifredClientStore(ILogger<WifredClientStore> logger, ILoggerFactory loggerFactory, IThrottle2Table locoTable)
     {
         _logger = logger;
         _loggerFactory = loggerFactory;

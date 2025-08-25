@@ -8,9 +8,9 @@ public class WiFredClients : HydroComponent
     public string TestString { get; set; } = "Hello World";
     public WiFredClient[] Clients { get; init; }
 
-    public WiFredClients(WifredDeviceStore deviceStore)
+    public WiFredClients(WifredClientStore clientStore)
     {
-        Clients = deviceStore.GetAllClients().Select(c => new WiFredClient
+        Clients = clientStore.GetAllClients().Select(c => new WiFredClient
         {
             Name = c.Name,
             Uid = c.Id,

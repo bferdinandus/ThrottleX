@@ -15,16 +15,16 @@ public class WiThrottleService : BackgroundService
     private readonly ILoggerFactory _loggerFactory;
     private readonly WiThrottleOptions _options;
 
-    private readonly WifredDeviceStore _deviceStore;
-    private readonly IThrottle2Table _locoTable;
+    private readonly WifredClientStore _clientStore;
 
     private ServiceDiscovery _serviceDiscovery = null!;
     private TcpListener _tcpListener = null!;
 
-    public WiThrottleService(IThrottle2Table locoTable, WifredDeviceStore deviceStore, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options, ILoggerFactory loggerFactory)
+    private volatile bool _acceptingConnections = true;
+
+    public WiThrottleService(WifredClientStore clientStore, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options, ILoggerFactory loggerFactory)
     {
-        _locoTable = locoTable;
-        _deviceStore = deviceStore;
+        _clientStore = clientStore;
 
         _logger = logger;
         _loggerFactory = loggerFactory;
@@ -62,10 +62,41 @@ public class WiThrottleService : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested && _acceptingConnections)
         {
-            var tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
-            _ = Task.Run(() => HandleClientAsync(tcpClient, stoppingToken), stoppingToken);
+            try
+            {
+                var tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
+                if (_acceptingConnections)
+                {
+                    _ = HandleClientAsync(tcpClient, stoppingToken)
+                        .ContinueWith(t =>
+                        {
+                            if (t.Exception != null)
+                            {
+                                _logger.LogCritical(t.Exception, "Unhandled fatal error in {name}", nameof(HandleClientAsync));
+                            }
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+                }
+                else
+                {
+                    tcpClient.Close(); // Reject connection if shutdown is underway
+                }
+            }
+            catch (SocketException ex) when (ex.ErrorCode == 995)
+            {
+                _logger.LogInformation("AcceptTcpClientAsync aborted due to shutdown.");
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                _logger.LogInformation("TCP listener disposed during shutdown.");
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in AcceptTcpClientAsync.");
+            }
         }
     }
 
@@ -73,7 +104,7 @@ public class WiThrottleService : BackgroundService
     {
         try
         {
-            _logger.LogInformation("Handling client connection...");
+            _logger.LogInformation("Handling WifredClient connection...");
             var customTcpClient = new CustomTcpClient(tcpClient, _loggerFactory.CreateLogger<CustomTcpClient>());
 
             await customTcpClient.SendMessageAsync("VN2.0");
@@ -103,58 +134,35 @@ public class WiThrottleService : BackgroundService
                 return;
             }
 
-            var wifredClient = _deviceStore.GetOrCreate(uid, name);
+            var wifredClient = _clientStore.GetOrCreate(uid, name);
             wifredClient.UpdateConnection(customTcpClient);
             _ = wifredClient.StartProcessingAsync(stoppingToken);
-            _logger.LogInformation("Client connected {name}/{id}", name, uid);
+            _logger.LogInformation("WifredClient connected {name}/{id}", name, uid);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error while handling client connection.");
+            _logger.LogError(ex, "Error while handling WifredClient connection.");
         }
     }
-
-    /*TcpClientConnection clientConnection = new(_logger, _locoTable, tcpClient, stoppingToken);
-    Clients.TryAdd(clientConnection.ClientId, clientConnection);
-    _logger.LogInformation("Client connected: {remoteEndPoint}", tcpClient.Client.RemoteEndPoint);
-    _ = Task.Run(() => ClientTask(clientConnection), stoppingToken);*/
-
-    /*private async Task ClientTask(TcpClientConnection clientConnection)
-    {
-        try
-        {
-            await clientConnection.HandleClientAsync();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error with client {client}", clientConnection.Name);
-        }
-        finally
-        {
-            bool clientRemoveSuccess = Clients.TryRemove(clientConnection.ClientId, out _);
-            if (!clientRemoveSuccess)
-            {
-                _logger.LogWarning("Client removal {client} unsuccessful", clientConnection.Name);
-            }
-
-            clientConnection.TcpClient.Close();
-            _logger.LogInformation("Client disconnected: {client}", clientConnection.Name);
-        }
-    }*/
-
+    
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("WiThrottle stopping....");
+
+        _acceptingConnections = false;
+
         _serviceDiscovery.Unadvertise();
         _serviceDiscovery.Dispose();
+
+        // asynchronously disconnect all present and connected clients 
+        var disconnectTasks = _clientStore.GetAllClients()
+            .Where(client => client.IsConnected)
+            .Select(client => Task.Run(client.Disconnect, cancellationToken));
+        await Task.WhenAll(disconnectTasks);
+
         _tcpListener.Stop();
 
-        /*foreach (TcpClientConnection client in Clients.Values)
-        {
-            client.TcpClient.Close();
-        }*/
-
+        _logger.LogInformation("WiThrottleService stopped....");
         await base.StopAsync(cancellationToken);
-        _logger.LogInformation("WiThrottle stopped....");
     }
 }
