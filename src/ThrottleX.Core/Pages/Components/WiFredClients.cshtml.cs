@@ -15,9 +15,10 @@ public class WiFredClients : HydroComponent
             Name = c.Name,
             Uid = c.Id,
             IpAddress = c.GetIpAddress(),
-            //Locos = c.GetLocoAdresses(),
+            Locos = c.GetLocoAdresses(),
             Status = c.IsConnected ? WiFredStatus.Online : WiFredStatus.Offline,
-            LastMessage = c.LastMessage
+            LastMessage = c.LastMessage,
+            ConnectedAt = c.ConnectedAt
         }).ToArray();
     }
 
@@ -35,6 +36,7 @@ public class WiFredClient
     public string Locos { get; init; } = string.Empty;
     public WiFredStatus Status { get; init; }
     public DateTime LastMessage { get; init; }
+    public DateTime? ConnectedAt { get; init; }
 }
 
 public enum WiFredStatus

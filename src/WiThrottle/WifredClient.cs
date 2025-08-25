@@ -13,8 +13,10 @@ public class WifredClient
     public string Name { get; private set; }
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
+    
     public bool IsConnected => _tcpClient?.IsConnected ?? false;
     public string GetIpAddress() => _tcpClient?.GetIpAddress() ?? string.Empty;
+    public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
 
     private CustomTcpClient? _tcpClient;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
@@ -56,6 +58,7 @@ public class WifredClient
                 case CommandType.Unknown:
                     break;
             }
+            LastMessage = DateTime.UtcNow;
         }
     }
 
