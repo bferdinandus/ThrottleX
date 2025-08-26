@@ -1,151 +1,85 @@
-﻿using Microsoft.Extensions.Logging;
-using Shared.Models;
+﻿using System.Net.Sockets;
+using Microsoft.Extensions.Logging;
 using Shared;
-using System;
-using System.IO;
-using System.Net.Sockets;
-using System.Text;
 using Shared.LocoTable;
-using System.Net;
-using System.Runtime.CompilerServices;
+using Shared.Models;
 
 namespace WiThrottle;
 
-public class TcpClientConnection
+public class WifredClient
 {
-    public TcpClient TcpClient { get; }
-    public string ClientId { get; } = Guid.NewGuid().ToString();
-    public DateTime ConnectionTime { get; } = DateTime.Now;
-    public string Name { get; private set; }
-    public string Uid { get; private set; }
-
     private readonly ILogger _logger;
-    private readonly CancellationToken _stoppingToken;
-    private readonly Stream _stream;
-    private readonly IThrottle2Table _locoTable;
-    private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
+    public string Id { get; private set; }
+    public string Name { get; private set; }
+    public DateTime? ConnectedAt { get; private set; }
+    public DateTime LastMessage { get; private set; }
+    
+    public bool IsConnected => _tcpClient?.IsConnected ?? false;
+    public string GetIpAddress() => _tcpClient?.GetIpAddress() ?? string.Empty;
+    public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
 
-    public TcpClientConnection(ILogger logger, IThrottle2Table locoTable, TcpClient tcpClient, CancellationToken stoppingToken)
+    private CustomTcpClient? _tcpClient;
+    private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
+    private readonly IThrottle2Table _locoTable;
+    private CancellationToken _stoppingToken;
+
+    public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable)
     {
         _logger = logger;
         _locoTable = locoTable;
-        TcpClient = tcpClient;
+        
+        Id = id;
+        Name = name;
+    }
+
+    public async Task StartProcessingAsync(CancellationToken stoppingToken)
+    {
         _stoppingToken = stoppingToken;
-
-        _stream = TcpClient.GetStream();
-        Name = ClientId; // will be overwritten when client tells us its name
-    }
-
-    public string GetLocoAdresses()
-    {
-        return string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
-    }
-
-    public string GetIpAddress()
-    {
-        return (TcpClient.Client.RemoteEndPoint as IPEndPoint)?.Address.ToString() ?? string.Empty;
-    }
-
-    internal async Task HandleClientAsync()
-    {
-        byte[] buffer = new byte[1024];
-        StringBuilder messageBuffer = new();
-
-        // Send welcome message to the client
-        await SendMessageAsync("VN2.0");
-        // set required keep alive timeout
-        await SendMessageAsync("*60");
-
-        int bytesRead;
-        while ((bytesRead = await ReadAsync(buffer)) != 0)
+        while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
-            // Convert the received bytes into a string and append to the message buffer
-            string receivedText = Encoding.UTF8.GetString(buffer, 0, bytesRead);
-            messageBuffer.Append(receivedText);
+            string? line = await _tcpClient!.ReadNextMessageAsync(stoppingToken);
 
-//            _logger.LogDebug("Received text from {client}: {receivedText}", Name, receivedText);
+            if (line == null) continue;
 
-            // Extract and process complete messages
-            List<string> messages = ExtractCompleteMessages(ref messageBuffer);
-            foreach (string message in messages)
+            WiThrottleMessage message = WiThrottleMessageProcessor.HandleMessage(line);
+            _logger.LogInformation("Message received: {message}", message);
+
+            // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
+            switch (message.Type)
             {
-                _logger.LogInformation("Processing message from {client}: `{message}`", Name, message);
-                await HandleIncomingMessageAsync(message);
+                case CommandType.Quit:
+                    _logger.LogInformation("{Name} says bye.", Name);
+                    Disconnect();
+                    break;
+                case CommandType.MultiThrottle:
+                    await MultiThrottleAsync($"M{message.Message}");
+                    break;
+                case CommandType.HeartBeat:
+                case CommandType.Unknown:
+                    break;
             }
+            LastMessage = DateTime.UtcNow;
         }
     }
 
-    private static List<string> ExtractCompleteMessages(ref StringBuilder messageBuffer)
+    public void UpdateConnection(CustomTcpClient client)
     {
-        string bufferContent = messageBuffer.ToString();
-        List<string> messages = [];
-
-        // when the buffer content ends with a newline the last message is considered complete
-        // if not complete it should be added back to the messageBuffer and wait for more characters
-        bool lastMessageComplete = bufferContent[^1] == '\r' || bufferContent[^1] == '\n';
-
-        // Split the buffer content by newline characters
-        string[] splitMessages = bufferContent.Split(["\r\n", "\r", "\n"], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-        // Add all complete messages to the list
-        messages.AddRange(lastMessageComplete ? splitMessages : splitMessages[..^1]);
-
-        // Clear the messageBuffer and append the last (incomplete) part back to it
-        messageBuffer.Clear();
-        if (!lastMessageComplete)
-        {
-            messageBuffer.Append(splitMessages[^1]);
-        }
-
-        return messages;
+        if (IsConnected) Disconnect();
+        
+        _tcpClient = client;
+        ConnectedAt = DateTime.UtcNow;
     }
 
-    private async Task HandleIncomingMessageAsync(string message)
+    public void Disconnect()
     {
-        if (string.IsNullOrWhiteSpace(message))
-        {
-            return;
-        }
+        if (!IsConnected) return;
 
-        char command = message[0];
-
-        switch (command)
-        {
-            case 'N': // Device Name
-                string deviceName = message[1..];
-                _logger.LogInformation("Received Name: {deviceName}", deviceName);
-                Name = deviceName;
-
-                break;
-            case 'H': // Hardware
-                char subCommand = message[1];
-
-                switch (subCommand)
-                {
-                    case 'U': // Identifier
-                        string deviceIdentifier = message[2..];
-                        Uid = deviceIdentifier;
-                        _logger.LogInformation("Received Uid: {deviceIdentifier}", deviceIdentifier);
-                        break;
-                    default:
-                        _logger.LogWarning("Unknown sub command: {command} in {message}", command, message);
-                        break;
-                }
-
-                break;
-            case 'M':
-                await MultiThrottleAsync(message);
-                break;
-            case 'Q':
-                _logger.LogInformation("{Name} says bye.", Name);
-                break;
-            case '*':
-                break;
-            default:
-                _logger.LogWarning("Unknown command: {command} in {message}", command, message);
-                break;
-        }
+        ConnectedAt = null;
+        _tcpClient?.Dispose();
+        _tcpClient = null!;
     }
+
+    #region MultiThrottle
 
     private async Task MultiThrottleAsync(string message)
     {
@@ -159,7 +93,6 @@ public class TcpClientConnection
         IAddress? address = null; // null means wildcard
         if (!"*".Equals(addressPart))
             address = addressPart.ParseWtAddress();
-
 
         switch (first[0])
         {
@@ -269,7 +202,7 @@ public class TcpClientConnection
         if (locoRow.IsActive)
         {
             _logger.LogError("got loco row for address {LocoRowAddress} that is already active, refusing to steal!", locoRow.Address);
-            await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}");
+            await _tcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
         }
 
         _logger.LogInformation("{Name}: got loco row for address {LocoRowAddress}, activating now", Name, locoRow.Address);
@@ -285,17 +218,17 @@ public class TcpClientConnection
         {
             case OccupySlotResult.Success:
                 _logger.Log(LogLevel.Information, "{Name}: command station success", Name);
-                await SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}");
+                await _tcpClient?.SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}")!;
                 var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
                 var slot = slotData!.Value; // not null in this case
-                await SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}");
-                await SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}");
+                await _tcpClient?.SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}")!;
+                await _tcpClient?.SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}")!;
                 //TODO forward functions
                 return; // finished for now
 
             case OccupySlotResult.Occupied:
                 _logger.LogError("{Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Name, address);
-                await SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}");
+                await _tcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
                 break; // deactivate below
 
             default: // failure
@@ -341,15 +274,5 @@ public class TcpClientConnection
         return new InvalidOperationException($"{Name}: {msg}");
     }
 
-    private async Task SendMessageAsync(string message)
-    {
-        byte[] messageToSend = Encoding.UTF8.GetBytes(message + Environment.NewLine);
-        await _stream.WriteAsync(messageToSend, _stoppingToken);
-        _logger.LogInformation("Sent to {Name}: '{message}'", Name, message);
-    }
-
-    private async Task<int> ReadAsync(byte[] buffer)
-    {
-        return await _stream.ReadAsync(buffer, _stoppingToken);
-    }
+    #endregion
 }

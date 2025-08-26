@@ -11,18 +11,23 @@ namespace WiThrottle;
 
 public class WiThrottleService : BackgroundService
 {
-    private readonly IThrottle2Table _locoTable;
     private readonly ILogger<WiThrottleService> _logger;
+    private readonly ILoggerFactory _loggerFactory;
     private readonly WiThrottleOptions _options;
 
-    public ConcurrentDictionary<string, TcpClientConnection> Clients { get; } = new();
-    private ServiceDiscovery _serviceDiscovery = default!;
-    private TcpListener _tcpListener = default!;
+    private readonly WifredClientStore _clientStore;
 
-    public WiThrottleService(IThrottle2Table locoTable, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options)
+    private ServiceDiscovery _serviceDiscovery = null!;
+    private TcpListener _tcpListener = null!;
+
+    private volatile bool _acceptingConnections = true;
+
+    public WiThrottleService(WifredClientStore clientStore, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options, ILoggerFactory loggerFactory)
     {
-        _locoTable = locoTable;
+        _clientStore = clientStore;
+
         _logger = logger;
+        _loggerFactory = loggerFactory;
         _options = options.Value;
     }
 
@@ -30,24 +35,17 @@ public class WiThrottleService : BackgroundService
     {
         // open the port for wiFreds to connect on
         _tcpListener = new TcpListener(IPAddress.Any, _options.Port);
-
         _tcpListener.Start();
         _logger.LogInformation("Server started on port: {port}.", _options.Port);
 
         // Advertise the service using mDNS / zeroConf
-        /*var mdns = new MulticastService();
+        IEnumerable<IPAddress> ipAddresses = null!;
 
-
-        List<ServiceProfile> serviceProfiles = MulticastService.GetIPAddresses()
-            .Where(ipAddress => ipAddress.AddressFamily == AddressFamily.InterNetwork)
-            .Select(ipAddress => new ServiceProfile("Fremo WiThrottle", "_withrottle._tcp", _options.Port, [ipAddress]))
-            .ToList();*/
-
+        // Try and get the ip-addresses of the network interface identified by the name from the config
+        // if not found then ipAddresses will stay NULL and bonjour broadcast will happen on all active devices
         var foundNetworkInterface = MulticastService
             .GetNetworkInterfaces()
             .FirstOrDefault(i => i.Name.Equals(_options.NetworkInterfaceName, StringComparison.OrdinalIgnoreCase));
-
-        IEnumerable<IPAddress> ipAddresses = null!;
         if (foundNetworkInterface is not null)
         {
             ipAddresses = foundNetworkInterface.GetIPProperties().UnicastAddresses.Select(uc => uc.Address);
@@ -59,59 +57,112 @@ public class WiThrottleService : BackgroundService
         _serviceDiscovery.Advertise(serviceProfile);
         _serviceDiscovery.Announce(serviceProfile);
 
-
         return base.StartAsync(cancellationToken);
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        while (!stoppingToken.IsCancellationRequested)
+        while (!stoppingToken.IsCancellationRequested && _acceptingConnections)
         {
-            TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
-            TcpClientConnection clientConnection = new(_logger, _locoTable, tcpClient, stoppingToken);
-
-            Clients.TryAdd(clientConnection.ClientId, clientConnection);
-            _logger.LogInformation("Client connected: {remoteEndPoint}", tcpClient.Client.RemoteEndPoint);
-            _ = Task.Run(() => ClientTask(clientConnection), stoppingToken);
+            try
+            {
+                var tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
+                if (_acceptingConnections)
+                {
+                    _ = HandleClientAsync(tcpClient, stoppingToken)
+                        .ContinueWith(t =>
+                        {
+                            if (t.Exception != null)
+                            {
+                                _logger.LogCritical(t.Exception, "Unhandled fatal error in {name}", nameof(HandleClientAsync));
+                            }
+                        }, TaskContinuationOptions.OnlyOnFaulted);
+                }
+                else
+                {
+                    tcpClient.Close(); // Reject connection if shutdown is underway
+                }
+            }
+            catch (SocketException ex) when (ex.ErrorCode == 995)
+            {
+                _logger.LogInformation("AcceptTcpClientAsync aborted due to shutdown.");
+                break;
+            }
+            catch (ObjectDisposedException)
+            {
+                _logger.LogInformation("TCP listener disposed during shutdown.");
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Unexpected error in AcceptTcpClientAsync.");
+            }
         }
     }
 
-    private async Task ClientTask(TcpClientConnection clientConnection)
+    private async Task HandleClientAsync(TcpClient tcpClient, CancellationToken stoppingToken)
     {
         try
         {
-            await clientConnection.HandleClientAsync();
+            _logger.LogInformation("Handling WifredClient connection...");
+            var customTcpClient = new CustomTcpClient(tcpClient, _loggerFactory.CreateLogger<CustomTcpClient>());
+
+            await customTcpClient.SendMessageAsync("VN2.0");
+            await customTcpClient.SendMessageAsync("*60");
+
+            string? name = null;
+            WiThrottleMessage message = WiThrottleMessageProcessor.HandleMessage(await customTcpClient.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {message}", message);
+            if (message.Type == CommandType.Name)
+            {
+                name = message.Message;
+            }
+
+            string? uid = null;
+            message = WiThrottleMessageProcessor.HandleMessage(await customTcpClient.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {message}", message);
+            if (message.Type == CommandType.Uid)
+            {
+                uid = message.Message;
+            }
+
+            if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(name))
+            {
+                _logger.LogError("Did not receive a name or id.");
+                customTcpClient.Dispose();
+
+                return;
+            }
+
+            var wifredClient = _clientStore.GetOrCreate(uid, name);
+            wifredClient.UpdateConnection(customTcpClient);
+            _ = wifredClient.StartProcessingAsync(stoppingToken);
+            _logger.LogInformation("WifredClient connected {name}/{id}", name, uid);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error with client {client}", clientConnection.Name);
-        }
-        finally
-        {
-            bool clientRemoveSuccess = Clients.TryRemove(clientConnection.ClientId, out _);
-            if (!clientRemoveSuccess)
-            {
-                _logger.LogWarning("Client removal {client} unsuccessful", clientConnection.Name);
-            }
-
-            clientConnection.TcpClient.Close();
-            _logger.LogInformation("Client disconnected: {client}", clientConnection.Name);
+            _logger.LogError(ex, "Error while handling WifredClient connection.");
         }
     }
-
+    
     public override async Task StopAsync(CancellationToken cancellationToken)
     {
         _logger.LogInformation("WiThrottle stopping....");
+
+        _acceptingConnections = false;
+
         _serviceDiscovery.Unadvertise();
         _serviceDiscovery.Dispose();
+
+        // asynchronously disconnect all present and connected clients 
+        var disconnectTasks = _clientStore.GetAllClients()
+            .Where(client => client.IsConnected)
+            .Select(client => Task.Run(client.Disconnect, cancellationToken));
+        await Task.WhenAll(disconnectTasks);
+
         _tcpListener.Stop();
 
-        foreach (TcpClientConnection client in Clients.Values)
-        {
-            client.TcpClient.Close();
-        }
-
+        _logger.LogInformation("WiThrottleService stopped....");
         await base.StopAsync(cancellationToken);
-        _logger.LogInformation("WiThrottle stopped....");
     }
 }

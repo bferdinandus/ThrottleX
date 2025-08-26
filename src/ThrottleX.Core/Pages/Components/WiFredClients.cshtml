@@ -5,20 +5,22 @@
         <tr>
             <th>Name</th>
             <th>uid</th>
-            <th>IpAddress</th>
             <th>loco(s)</th>
+            <th>last message at</th>
             <th>status</th>
-            <th>time since last message</th>
+            <th>IpAddress</th>
+            <th>connected at</th>
         </tr>
         @foreach(var client in Model.Clients)
         {
             <tr>
                 <td>@client.Name</td>
                 <td>@client.Uid</td>
-                <td><a href="http://@client.IpAddress" target="_blank">@client.IpAddress</a></td>
                 <td>@client.Locos</td>
+                <td>@client.LastMessage</td>
                 <td>@client.Status</td>
-                <td>@client.TimeSinceLastMessage</td>
+                <td><a href="http://@client.IpAddress" target="_blank">@client.IpAddress</a></td>
+                <td>@client.ConnectedAt</td>
             </tr>
         }
     </table>
