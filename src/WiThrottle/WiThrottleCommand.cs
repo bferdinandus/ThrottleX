@@ -1,12 +1,12 @@
 ﻿namespace WiThrottle;
 
-public class WiThrottleMessage
+public class WiThrottleCommand
 {
     public CommandType Type { get; init; }
     public string Message { get; init; } = string.Empty;
     
     public override string ToString()
     {
-        return $"WiThrottleMessage {{ Type = {Type}, Message = \"{Message}\" }}";
+        return $"WiThrottleCommand {{ Type = {Type}, Message = \"{Message}\" }}";
     }
 }

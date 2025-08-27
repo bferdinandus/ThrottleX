@@ -4,9 +4,9 @@ namespace WiThrottle;
 
 public static class WiThrottleMessageProcessor
 {
-    public static WiThrottleMessage HandleMessage(string? message)
+    public static WiThrottleCommand ParseCommand(string message)
     {
-        WiThrottleMessage response = new() { Type = CommandType.Unknown, Message = message ?? string.Empty };
+        WiThrottleCommand response = new() { Type = CommandType.Unknown, Message = message };
         if (string.IsNullOrWhiteSpace(message))
         {
             return response;
@@ -16,7 +16,7 @@ public static class WiThrottleMessageProcessor
         switch (message[0])
         {
             case 'N': // Device Name
-                response = new WiThrottleMessage { Type = CommandType.Name, Message = message[1..] };
+                response = new WiThrottleCommand { Type = CommandType.Name, Message = message[1..] };
 
                 break;
             case 'H': // Hardware
@@ -25,22 +25,33 @@ public static class WiThrottleMessageProcessor
                 response = subCommand switch
                 {
                     'U' => // Identifier
-                        new WiThrottleMessage { Type = CommandType.Uid, Message = message[2..] },
+                        new WiThrottleCommand { Type = CommandType.Uid, Message = message[2..] },
                     _ => response
                 };
 
                 break;
             case 'M':
-                response = new WiThrottleMessage { Type = CommandType.MultiThrottle, Message = message[1..] };
+                response = new WiThrottleCommand { Type = CommandType.MultiThrottle, Message = message[1..] };
                 break;
             case 'Q':
-                response = new WiThrottleMessage { Type = CommandType.Quit };
+                response = new WiThrottleCommand { Type = CommandType.Quit };
                 break;
             case '*':
-                response = new WiThrottleMessage { Type = CommandType.HeartBeat };
+                response = new WiThrottleCommand { Type = CommandType.HeartBeat };
                 break;
         }
 
+        return response;
+    }
+
+    public static WiThrottleCommand ParseThrottleCommand(string message)
+    {
+        WiThrottleCommand response = new() { Type = CommandType.Unknown, Message = message };
+        if (string.IsNullOrWhiteSpace(message))
+        {
+            return response;
+        }
+        // todo: parse the multi throttle command
         return response;
     }
 }

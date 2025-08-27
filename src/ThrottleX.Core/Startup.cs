@@ -19,24 +19,23 @@ public class Startup
 
     public void ConfigureServices(IServiceCollection services)
     {
-        // Add other services here
+        // Configure and add Loconet related services
         services.AddSingleton<LocoTableImpl>();
         services.AddSingleton<ILoconet2Table>(sp => sp.GetService<LocoTableImpl>()!);
         services.AddSingleton<IThrottle2Table>(sp => sp.GetService<LocoTableImpl>()!);
 
-        // Configure and add WiThrottleService
+        var loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
+        //services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
+        services.AddHostedService(sp => new LoconetService(sp.GetService<ILogger<LoconetService>>(), sp.GetService<ILoconet2Table>()!, loconetConfig));
+
+        // Configure and add WiThrottle relates services
         services.AddSingleton<WifredClientStore>();
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
         
         services.AddSingleton<WiThrottleService>();
         services.AddHostedService(p => p.GetRequiredService<WiThrottleService>());
-            
-        var loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
-        //services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
-        services.AddHostedService(sp => new LoconetService(sp.GetService<ILogger<LoconetService>>(), sp.GetService<ILoconet2Table>()!, loconetConfig));
-
-        // Add services to the container.
-
+        
+        // Configure and add website services
         services.AddRazorPages();
         services.AddHydro();
     }
@@ -52,7 +51,6 @@ public class Startup
 
         app.UseStaticFiles();
 
-        //Add support to logging request with SERILOG
         app.UseSerilogRequestLogging();
 
         app.UseRouting();

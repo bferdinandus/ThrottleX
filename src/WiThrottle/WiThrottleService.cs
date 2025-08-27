@@ -66,7 +66,7 @@ public class WiThrottleService : BackgroundService
         {
             try
             {
-                var tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
+                TcpClient tcpClient = await _tcpListener.AcceptTcpClientAsync(stoppingToken);
                 if (_acceptingConnections)
                 {
                     _ = HandleClientAsync(tcpClient, stoppingToken)
@@ -111,19 +111,19 @@ public class WiThrottleService : BackgroundService
             await customTcpClient.SendMessageAsync("*60");
 
             string? name = null;
-            WiThrottleMessage message = WiThrottleMessageProcessor.HandleMessage(await customTcpClient.ReadNextMessageAsync(stoppingToken));
-            _logger.LogInformation("Message received: {message}", message);
-            if (message.Type == CommandType.Name)
+            WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await customTcpClient.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {command}", command);
+            if (command.Type == CommandType.Name)
             {
-                name = message.Message;
+                name = command.Message;
             }
 
             string? uid = null;
-            message = WiThrottleMessageProcessor.HandleMessage(await customTcpClient.ReadNextMessageAsync(stoppingToken));
-            _logger.LogInformation("Message received: {message}", message);
-            if (message.Type == CommandType.Uid)
+            command = WiThrottleMessageProcessor.ParseCommand(await customTcpClient.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {command}", command);
+            if (command.Type == CommandType.Uid)
             {
-                uid = message.Message;
+                uid = command.Message;
             }
 
             if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(name))
@@ -134,7 +134,7 @@ public class WiThrottleService : BackgroundService
                 return;
             }
 
-            var wifredClient = _clientStore.GetOrCreate(uid, name);
+            WifredClient wifredClient = _clientStore.GetOrCreate(uid, name);
             wifredClient.UpdateConnection(customTcpClient);
             _ = wifredClient.StartProcessingAsync(stoppingToken);
             _logger.LogInformation("WifredClient connected {name}/{id}", name, uid);

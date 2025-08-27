@@ -14,11 +14,11 @@ public class WifredClient
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
     
-    public bool IsConnected => _tcpClient?.IsConnected ?? false;
-    public string GetIpAddress() => _tcpClient?.GetIpAddress() ?? string.Empty;
+    public bool IsConnected => _customTcpClient?.IsConnected ?? false;
+    public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
 
-    private CustomTcpClient? _tcpClient;
+    private CustomTcpClient? _customTcpClient;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
     private readonly IThrottle2Table _locoTable;
     private CancellationToken _stoppingToken;
@@ -37,22 +37,18 @@ public class WifredClient
         _stoppingToken = stoppingToken;
         while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
-            string? line = await _tcpClient!.ReadNextMessageAsync(stoppingToken);
-
-            if (line == null) continue;
-
-            WiThrottleMessage message = WiThrottleMessageProcessor.HandleMessage(line);
-            _logger.LogInformation("Message received: {message}", message);
+            WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {command}", command);
 
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
-            switch (message.Type)
+            switch (command.Type)
             {
                 case CommandType.Quit:
                     _logger.LogInformation("{Name} says bye.", Name);
                     Disconnect();
                     break;
                 case CommandType.MultiThrottle:
-                    await MultiThrottleAsync($"M{message.Message}");
+                    await MultiThrottleAsync($"M{command.Message}");
                     break;
                 case CommandType.HeartBeat:
                 case CommandType.Unknown:
@@ -66,7 +62,7 @@ public class WifredClient
     {
         if (IsConnected) Disconnect();
         
-        _tcpClient = client;
+        _customTcpClient = client;
         ConnectedAt = DateTime.UtcNow;
     }
 
@@ -75,8 +71,8 @@ public class WifredClient
         if (!IsConnected) return;
 
         ConnectedAt = null;
-        _tcpClient?.Dispose();
-        _tcpClient = null!;
+        _customTcpClient?.Dispose();
+        _customTcpClient = null!;
     }
 
     #region MultiThrottle
@@ -202,7 +198,7 @@ public class WifredClient
         if (locoRow.IsActive)
         {
             _logger.LogError("got loco row for address {LocoRowAddress} that is already active, refusing to steal!", locoRow.Address);
-            await _tcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
+            await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
         }
 
         _logger.LogInformation("{Name}: got loco row for address {LocoRowAddress}, activating now", Name, locoRow.Address);
@@ -218,17 +214,17 @@ public class WifredClient
         {
             case OccupySlotResult.Success:
                 _logger.Log(LogLevel.Information, "{Name}: command station success", Name);
-                await _tcpClient?.SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}")!;
+                await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}")!;
                 var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
                 var slot = slotData!.Value; // not null in this case
-                await _tcpClient?.SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}")!;
-                await _tcpClient?.SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}")!;
+                await _customTcpClient?.SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}")!;
+                await _customTcpClient?.SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}")!;
                 //TODO forward functions
                 return; // finished for now
 
             case OccupySlotResult.Occupied:
                 _logger.LogError("{Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Name, address);
-                await _tcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
+                await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
                 break; // deactivate below
 
             default: // failure

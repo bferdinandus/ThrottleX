@@ -13,10 +13,10 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 static void ConfigSerilog(HostBuilderContext context, LoggerConfiguration configuration)
 {
     configuration.MinimumLevel.Verbose()
-                 .Enrich.WithThreadId()
-                 .WriteTo.Console(Debug)
-                 .WriteTo.File("Logs/ThrottleX-.log",
-                               Verbose,
-                               rollingInterval: RollingInterval.Day,
-                               outputTemplate: "{Timestamp:DDD.HH:mm:ss.fff} [{Level:u3}] {ThreadId}: {Message:lj}{NewLine}{Exception}");
+        .Enrich.WithThreadId()
+        .WriteTo.Console(Debug, outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] [{RequestId}]{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}")
+        .WriteTo.File("Logs/ThrottleX-.log",
+            Verbose,
+            rollingInterval: RollingInterval.Day,
+            outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] [{RequestId}] {Message:lj}{NewLine}{Exception}{NewLine}");
 }

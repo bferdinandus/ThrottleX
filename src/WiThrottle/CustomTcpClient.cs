@@ -47,7 +47,7 @@ public class CustomTcpClient : IDisposable
         },  _cts.Token);
     }
 
-    public async Task<string?> ReadNextMessageAsync(CancellationToken stoppingToken)
+    public async Task<string> ReadNextMessageAsync(CancellationToken stoppingToken)
     {
         return await _messageChannel.Reader.ReadAsync(stoppingToken);
     }

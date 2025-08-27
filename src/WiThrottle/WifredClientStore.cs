@@ -21,7 +21,7 @@ public class WifredClientStore
     {
         return _clients.GetOrAdd(uid, _ =>
         {
-            var newClient = new WifredClient(uid, name, _loggerFactory.CreateLogger<WifredClient>(), _locoTable);
+            WifredClient newClient = new WifredClient(uid, name, _loggerFactory.CreateLogger<WifredClient>(), _locoTable);
             _logger.LogInformation("Created new WifredClient with name: `{name}` and uid: {uid}", name, uid);
             
             return newClient;
