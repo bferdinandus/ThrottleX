@@ -1,11 +1,11 @@
-﻿using System.Collections.Concurrent;
-using System.Net;
+﻿using System.Net;
 using System.Net.Sockets;
 using Makaretu.Dns;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Shared.LocoTable;
+using WiThrottle.Enums;
+using WiThrottle.Models;
 
 namespace WiThrottle;
 
@@ -111,19 +111,19 @@ public class WiThrottleService : BackgroundService
             await customTcpClient.SendMessageAsync("*60");
 
             string? name = null;
-            WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await customTcpClient.ReadNextMessageAsync(stoppingToken));
-            _logger.LogInformation("Message received: {command}", command);
-            if (command.Type == CommandType.Name)
+            WiThrottleMessage message = MessageProcessor.ParseCommand(await customTcpClient.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {message}", message);
+            if (message.Type == WtCommand.Name)
             {
-                name = command.Message;
+                name = message.Command;
             }
 
             string? uid = null;
-            command = WiThrottleMessageProcessor.ParseCommand(await customTcpClient.ReadNextMessageAsync(stoppingToken));
-            _logger.LogInformation("Message received: {command}", command);
-            if (command.Type == CommandType.Uid)
+            message = MessageProcessor.ParseCommand(await customTcpClient.ReadNextMessageAsync(stoppingToken));
+            _logger.LogInformation("Message received: {message}", message);
+            if (message.Type == WtCommand.Uid)
             {
-                uid = command.Message;
+                uid = message.Command;
             }
 
             if (string.IsNullOrWhiteSpace(uid) || string.IsNullOrWhiteSpace(name))

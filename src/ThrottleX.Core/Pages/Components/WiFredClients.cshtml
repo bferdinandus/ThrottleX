@@ -17,10 +17,15 @@
                 <td>@client.Name</td>
                 <td>@client.Uid</td>
                 <td>@client.Locos</td>
-                <td>@client.LastMessage</td>
+                <td>@client.LastMessage.ToLocalTime()</td>
                 <td>@client.Status</td>
                 <td><a href="http://@client.IpAddress" target="_blank">@client.IpAddress</a></td>
-                <td>@client.ConnectedAt</td>
+                <td>
+                    @if (client.ConnectedAt.HasValue)
+                    {
+                        @client.ConnectedAt.Value.ToLocalTime()
+                    }
+                </td>
             </tr>
         }
     </table>

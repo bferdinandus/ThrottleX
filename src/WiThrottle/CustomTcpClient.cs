@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 
@@ -41,7 +40,7 @@ public class CustomTcpClient : IDisposable
                 if (message == null) continue;
 
                 // a line was received, put it in the messageCannel so the rest of the code can read it
-                _logger.LogDebug("TcpClient put message in channel: {message}", message);
+                _logger.LogDebug("Message Received: {message}", message);
                 await _messageChannel.Writer.WriteAsync(message);
             }
         },  _cts.Token);
@@ -56,6 +55,7 @@ public class CustomTcpClient : IDisposable
     {
         if (_tcpClient.Connected)
         {
+            _logger.LogDebug("Message Sent: {message}", message);
             await _writer.WriteLineAsync(message);
         }
     }

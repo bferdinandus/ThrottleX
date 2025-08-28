@@ -1,8 +1,9 @@
-﻿using System.Net.Sockets;
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.LocoTable;
 using Shared.Models;
+using WiThrottle.Enums;
+using WiThrottle.Models;
 
 namespace WiThrottle;
 
@@ -13,7 +14,7 @@ public class WifredClient
     public string Name { get; private set; }
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
-    
+
     public bool IsConnected => _customTcpClient?.IsConnected ?? false;
     public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
@@ -27,33 +28,34 @@ public class WifredClient
     {
         _logger = logger;
         _locoTable = locoTable;
-        
+
         Id = id;
         Name = name;
     }
 
-    public async Task StartProcessingAsync(CancellationToken stoppingToken)
+    public async Task StartProcessingAsync(CancellationToken cancellationToken)
     {
-        _stoppingToken = stoppingToken;
-        while (!stoppingToken.IsCancellationRequested && IsConnected)
+        _stoppingToken = cancellationToken;
+        while (!cancellationToken.IsCancellationRequested && IsConnected)
         {
-            WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(stoppingToken));
-            _logger.LogInformation("Message received: {command}", command);
+            WiThrottleMessage message = MessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(cancellationToken));
 
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
-            switch (command.Type)
+            switch (message.Type)
             {
-                case CommandType.Quit:
+                case WtCommand.Quit:
                     _logger.LogInformation("{Name} says bye.", Name);
+                    await Task.Delay(1000, cancellationToken);
                     Disconnect();
                     break;
-                case CommandType.MultiThrottle:
-                    await MultiThrottleAsync($"M{command.Message}");
+                case WtCommand.MultiThrottle:
+                    await MultiThrottleAsync(MessageProcessor.ParseMultiThrottleCommand(message.Command));
                     break;
-                case CommandType.HeartBeat:
-                case CommandType.Unknown:
+                case WtCommand.HeartBeat:
+                case WtCommand.Unknown:
                     break;
             }
+
             LastMessage = DateTime.UtcNow;
         }
     }
@@ -61,7 +63,7 @@ public class WifredClient
     public void UpdateConnection(CustomTcpClient client)
     {
         if (IsConnected) Disconnect();
-        
+
         _customTcpClient = client;
         ConnectedAt = DateTime.UtcNow;
     }
@@ -75,102 +77,53 @@ public class WifredClient
         _customTcpClient = null!;
     }
 
-    #region MultiThrottle
+    #region MultiThrottleService
 
-    private async Task MultiThrottleAsync(string message)
+    private async Task MultiThrottleAsync(MultiThrottleMessage mtMessage)
     {
-        char mtIdentifier = message[1]; //TODO: find out what to do with this identifier
-        string mtCommand = message[2..];
-
-        string[] commandParts = mtCommand.Split(Constants.Separator);
-        string first = commandParts[0];
-
-        var addressPart = first[1..];
-        IAddress? address = null; // null means wildcard
-        if (!"*".Equals(addressPart))
-            address = addressPart.ParseWtAddress();
-
-        switch (first[0])
+        switch (mtMessage.Command)
         {
-            case '+': await MtAddAsync(mtIdentifier, address); break;
-            case '-': await MtRemoveAsync(mtIdentifier, address); break;
-            case 'A': await MtActionAsync(mtIdentifier, address, commandParts[1]); break;
-            default: _logger.LogError("{S}: Received unknown command: {C}", Name, first[0]); break;
+            case MtCommand.Add: await MtAddAsync(mtMessage); break;
+            case MtCommand.Remove: await MtRemoveAsync(mtMessage); break;
+            case MtCommand.Action: await MtActionAsync(mtMessage); break;
+            default: _logger.LogError("{S}: Received unknown command: {C}", Name, mtMessage.Command); break;
         }
     }
 
-    private enum ThrottleCommand
+    private async Task MtActionAsync(MultiThrottleMessage mtMessage)
     {
-        Consist = 'C',
-        ConsistLeadFromRoosterEntry = 'c',
-        Dispatch = 'd',
-        SetAddressFromRoosterEntry = 'E',
-        FunctionKey = 'F',
-        ForceFunction = 'f',
-        Idle = 'I',
-        SetLongAddress = 'L',
-        MomentaryFunction = 'm',
-        AskForCurrentSettings = 'q',
-        Quit = 'Q',
-        SetDirection = 'R',
-        Release = 'r',
-        SetShortAddress = 'S',
-        SetSpeedSetMode = 's',
-        SetVelocity = 'V',
-        EmergencyStop = 'X'
-    }
+        var throttleCommand = (ThrottleCommand)mtMessage.ThrottleCommandMessage[0];
+        var parameter = mtMessage.ThrottleCommandMessage[1..];
 
-    private async Task MtActionAsync(char mtIdentifier, IAddress? address, string second)
-    {
-        var cmd = second[0];
-        var par = second[1..];
-
-        bool ParseBinary(string parameter) => parameter switch
+        Action<IThrottle2Row>? action = throttleCommand switch
         {
-            "0" => false,
-            "1" => true,
-            _ => throw new ArgumentException(parameter + " must be 0 or 1", nameof(parameter))
-        };
-
-        (int number, bool state) ParseFunction()
-        {
-            var number = int.Parse(par[1..]);
-            var state = ParseBinary(par[..1]);
-            return (number, state);
-        }
-
-        Action<IThrottle2Row>? action = ((ThrottleCommand)cmd) switch
-        {
-            ThrottleCommand.SetVelocity => row => row.SetSpeed(int.Parse(par)),
-            ThrottleCommand.SetDirection => row => row.SetDirection(ParseBinary(par) ? Direction.Forward : Direction.Reverse),
+            ThrottleCommand.SetVelocity => row => row.SetSpeed(int.Parse(parameter)),
+            ThrottleCommand.SetDirection => row => row.SetDirection(parameter.ParseBinary() ? Direction.Forward : Direction.Reverse),
             ThrottleCommand.EmergencyStop => row => row.SetEmergencyStop(),
-            ThrottleCommand.FunctionKey => row =>
-            {
-                var (number, state) = ParseFunction();
+            ThrottleCommand.FunctionKey => row => {
+                var (number, state) = parameter.ParseFunction();
                 row.SetFunctionKey(number, state);
             },
-            ThrottleCommand.ForceFunction => row =>
-            {
-                var (number, state) = ParseFunction();
+            ThrottleCommand.ForceFunction => row => {
+                var (number, state) = parameter.ParseFunction();
                 row.ForceFunction(number, state);
             },
-            ThrottleCommand.MomentaryFunction => row =>
-            {
-                var (number, state) = ParseFunction();
+            ThrottleCommand.MomentaryFunction => row => {
+                var (number, state) = parameter.ParseFunction();
                 row.SetMomentaryFunction(number, state);
             },
             _ => null
         };
 
         if (action == null)
-            _logger.LogWarning("Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", cmd, (ThrottleCommand)cmd);
+            _logger.LogWarning("Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", throttleCommand, (ThrottleCommand)throttleCommand);
         else
-            ForSelectedRows(address, action);
+            ForSelectedRows(mtMessage.Address, action);
     }
 
-    private async Task MtRemoveAsync(char mtIdentifier, IAddress? address)
+    private async Task MtRemoveAsync(MultiThrottleMessage mtMessage)
     {
-        if (address != null && !_myLocos.ContainsKey(address))
+        if (mtMessage.Address != null && !_myLocos.ContainsKey(mtMessage.Address))
         {
             _logger.LogWarning("Throttle wants so remove an address that we don't have under control, ignoring this!");
             return;
@@ -178,7 +131,7 @@ public class WifredClient
 
         lock (_locoTable)
         {
-            ForSelectedRows(address, row =>
+            ForSelectedRows(mtMessage.Address, row =>
             {
                 _myLocos.Remove(row.Address);
                 row.Deactivate();
@@ -186,26 +139,26 @@ public class WifredClient
         }
     }
 
-    private async Task MtAddAsync(char mtIdentifier, IAddress? address)
+    private async Task MtAddAsync(MultiThrottleMessage mtMessage)
     {
-        if (address == null)
+        if (mtMessage.Address == null)
             throw Panic(LogLevel.Error, "MT-Add with wildcard is not legal");
 
-        if (_myLocos.ContainsKey(address))
+        if (_myLocos.ContainsKey(mtMessage.Address))
             throw Panic(LogLevel.Error, "MT-Add tries to add a loco _again_");
 
-        var locoRow = _locoTable.GetRowForAddress(address);
+        var locoRow = _locoTable.GetRowForAddress(mtMessage.Address);
         if (locoRow.IsActive)
         {
             _logger.LogError("got loco row for address {LocoRowAddress} that is already active, refusing to steal!", locoRow.Address);
-            await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
+            await _customTcpClient?.SendMessageAsync($"M{mtMessage.ThrottleId}S{mtMessage.Address.EncodeWtAddress()}{Constants.Separator}")!;
         }
 
         _logger.LogInformation("{Name}: got loco row for address {LocoRowAddress}, activating now", Name, locoRow.Address);
 
         lock (_locoTable) // lock scope is entire table in order to synchronize with cleanup thread
         {
-            _myLocos.Add(address, locoRow);
+            _myLocos.Add(mtMessage.Address, locoRow);
             locoRow.Activate();
         }
 
@@ -214,8 +167,8 @@ public class WifredClient
         {
             case OccupySlotResult.Success:
                 _logger.Log(LogLevel.Information, "{Name}: command station success", Name);
-                await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}")!;
-                var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
+                await _customTcpClient?.SendMessageAsync($"M{mtMessage.ThrottleId}+{mtMessage.Address.EncodeWtAddress()}{Constants.Separator}")!;
+                var prefix = $"M{mtMessage.ThrottleId}A{mtMessage.Address.EncodeWtAddress()}{Constants.Separator}";
                 var slot = slotData!.Value; // not null in this case
                 await _customTcpClient?.SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}")!;
                 await _customTcpClient?.SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}")!;
@@ -223,12 +176,12 @@ public class WifredClient
                 return; // finished for now
 
             case OccupySlotResult.Occupied:
-                _logger.LogError("{Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Name, address);
-                await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
+                _logger.LogError("{Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Name, mtMessage.Address);
+                await _customTcpClient?.SendMessageAsync($"M{mtMessage.ThrottleId}S{mtMessage.Address.EncodeWtAddress()}{Constants.Separator}")!;
                 break; // deactivate below
 
             default: // failure
-                _logger.LogWarning("{Name}: command station failure for address {Address}, deactivating", Name, address);
+                _logger.LogWarning("{Name}: command station failure for address {Address}, deactivating", Name, mtMessage.Address);
                 //TODO: what to answer for failure???
                 break; // deactivate below
         }
@@ -236,7 +189,7 @@ public class WifredClient
         lock (_locoTable)
         {
             locoRow.Deactivate();
-            _myLocos.Remove(address);
+            _myLocos.Remove(mtMessage.Address);
         }
     }
 
@@ -259,14 +212,17 @@ public class WifredClient
     private IEnumerable<IThrottle2Row> SelectedRows(IAddress? address)
     {
         if (address == null)
+        {
             return _myLocos.Values;
-        else
-            return [_myLocos[address]];
+        }
+
+        return [_myLocos[address]];
     }
 
-    private Exception Panic(LogLevel level, string msg)
+    private InvalidOperationException Panic(LogLevel level, string msg)
     {
         _logger.Log(level, msg);
+        
         return new InvalidOperationException($"{Name}: {msg}");
     }
 

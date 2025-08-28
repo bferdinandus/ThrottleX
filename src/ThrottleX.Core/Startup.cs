@@ -1,7 +1,6 @@
 ﻿using Hydro.Configuration;
 using Serilog;
 using Shared.LocoTable;
-using Shared.Models;
 using ThrottleX.Core.Loconet;
 using ThrottleX.Core.LocoTable;
 using WiThrottle;
