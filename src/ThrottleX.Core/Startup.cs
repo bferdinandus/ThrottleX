@@ -19,15 +19,18 @@ public class Startup
     public void ConfigureServices(IServiceCollection services)
     {
         // Configure and add Loconet related services
-        services.AddSingleton<LocoTableImpl>();
-        services.AddSingleton<ILoconet2Table>(sp => sp.GetService<LocoTableImpl>()!);
-        services.AddSingleton<IThrottle2Table>(sp => sp.GetService<LocoTableImpl>()!);
+        services.AddSingleton<LocoTable.LocoTable>();
+        services.AddSingleton<ILoconet2Table>(sp => sp.GetRequiredService<LocoTable.LocoTable>());
 
-        var loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
-        //services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
-        services.AddHostedService(sp => new LoconetService(sp.GetService<ILogger<LoconetService>>(), sp.GetService<ILoconet2Table>()!, loconetConfig));
+        // Configure and add MultiThrottle related services
+        services.AddSingleton<IThrottle2Table>(sp => sp.GetRequiredService<LocoTable.LocoTable>());
 
-        // Configure and add WiThrottle relates services
+        services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
+        services.AddSingleton<LoconetService>();
+
+        services.AddHostedService(sp => sp.GetRequiredService<LoconetService>());
+
+        // Configure and add WiThrottle related services
         services.AddSingleton<WifredClientStore>();
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
         

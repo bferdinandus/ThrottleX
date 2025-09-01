@@ -9,6 +9,7 @@ namespace WiThrottle;
 
 public class WifredClient
 {
+    private volatile bool _isAcceptingCommands = false;
     private readonly ILogger _logger;
     public string Id { get; private set; }
     public string Name { get; private set; }
@@ -36,9 +37,16 @@ public class WifredClient
     public async Task StartProcessingAsync(CancellationToken cancellationToken)
     {
         _stoppingToken = cancellationToken;
-        while (!cancellationToken.IsCancellationRequested && IsConnected)
+        _isAcceptingCommands = true;
+        while (!cancellationToken.IsCancellationRequested && IsConnected && _isAcceptingCommands)
         {
-            WiThrottleMessage message = MessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(cancellationToken));
+            string command = await _customTcpClient!.ReadNextMessageAsync(cancellationToken);
+            if (!_isAcceptingCommands)
+            {
+                break;
+            }
+            
+            WiThrottleMessage message = MessageProcessor.ParseCommand(command);
 
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (message.Type)
@@ -52,6 +60,7 @@ public class WifredClient
                     await MultiThrottleAsync(MessageProcessor.ParseMultiThrottleCommand(message.Command));
                     break;
                 case WtCommand.HeartBeat:
+                // TODO : act when heartbeat disappears...
                 case WtCommand.Unknown:
                     break;
             }
@@ -70,7 +79,15 @@ public class WifredClient
 
     public void Disconnect()
     {
-        if (!IsConnected) return;
+        if (!IsConnected)
+        {
+            return;
+        }
+
+        _isAcceptingCommands = false;
+
+        // TODO: make sure all loco's are stopped and released
+        // maybe? the wifred should do that actually. but what happens if the wifred just disappears...?
 
         ConnectedAt = null;
         _customTcpClient?.Dispose();
@@ -100,15 +117,18 @@ public class WifredClient
             ThrottleCommand.SetVelocity => row => row.SetSpeed(int.Parse(parameter)),
             ThrottleCommand.SetDirection => row => row.SetDirection(parameter.ParseBinary() ? Direction.Forward : Direction.Reverse),
             ThrottleCommand.EmergencyStop => row => row.SetEmergencyStop(),
-            ThrottleCommand.FunctionKey => row => {
+            ThrottleCommand.FunctionKey => row =>
+            {
                 var (number, state) = parameter.ParseFunction();
                 row.SetFunctionKey(number, state);
             },
-            ThrottleCommand.ForceFunction => row => {
+            ThrottleCommand.ForceFunction => row =>
+            {
                 var (number, state) = parameter.ParseFunction();
                 row.ForceFunction(number, state);
             },
-            ThrottleCommand.MomentaryFunction => row => {
+            ThrottleCommand.MomentaryFunction => row =>
+            {
                 var (number, state) = parameter.ParseFunction();
                 row.SetMomentaryFunction(number, state);
             },
@@ -116,7 +136,7 @@ public class WifredClient
         };
 
         if (action == null)
-            _logger.LogWarning("Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", throttleCommand, (ThrottleCommand)throttleCommand);
+            _logger.LogWarning("Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", throttleCommand, throttleCommand);
         else
             ForSelectedRows(mtMessage.Address, action);
     }
@@ -222,7 +242,7 @@ public class WifredClient
     private InvalidOperationException Panic(LogLevel level, string msg)
     {
         _logger.Log(level, msg);
-        
+
         return new InvalidOperationException($"{Name}: {msg}");
     }
 

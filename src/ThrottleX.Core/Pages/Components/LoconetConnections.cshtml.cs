@@ -6,10 +6,11 @@ namespace ThrottleX.Core.Pages.Components;
 
 public class LoconetConnections : HydroComponent
 {
-    public IEnumerable<(LoconetClient client, LoconetSend send)>? Connections => LoconetService.Instance?.Clients;
+    private readonly LoconetService _loconetService;
+    public IEnumerable<(LoconetClient client, LoconetSend send)>? Connections => _loconetService.Clients;
 
-    public LoconetConnections()
+    public LoconetConnections(LoconetService loconetService)
     {
-
+        _loconetService = loconetService;
     }
 }

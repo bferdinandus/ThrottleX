@@ -22,11 +22,11 @@ public class WiThrottleService : BackgroundService
 
     private volatile bool _acceptingConnections = true;
 
-    public WiThrottleService(WifredClientStore clientStore, ILogger<WiThrottleService> logger, IOptions<WiThrottleOptions> options, ILoggerFactory loggerFactory)
+    public WiThrottleService(WifredClientStore clientStore, IOptions<WiThrottleOptions> options, ILoggerFactory loggerFactory)
     {
         _clientStore = clientStore;
 
-        _logger = logger;
+        _logger = loggerFactory.CreateLogger<WiThrottleService>();
         _loggerFactory = loggerFactory;
         _options = options.Value;
     }
@@ -149,6 +149,8 @@ public class WiThrottleService : BackgroundService
     {
         _logger.LogInformation("WiThrottle stopping....");
 
+        // TODO: we should check and stop loco's when Throttle X goes down.
+        
         _acceptingConnections = false;
 
         _serviceDiscovery.Unadvertise();

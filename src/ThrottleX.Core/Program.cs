@@ -14,9 +14,9 @@ static void ConfigSerilog(HostBuilderContext context, LoggerConfiguration config
 {
     configuration.MinimumLevel.Verbose()
         .Enrich.WithThreadId()
-        .WriteTo.Console(Debug, outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] [{RequestId}]{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}")
+        .WriteTo.Console(Debug, outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] {ThreadId}: [{SourceContext}] [{RequestId}]{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}")
         .WriteTo.File("Logs/ThrottleX-.log",
             Verbose,
             rollingInterval: RollingInterval.Day,
-            outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] [{RequestId}] {Message:lj}{NewLine}{Exception}{NewLine}");
+            outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss.fff}] [{Level:u3}] {ThreadId}: [{SourceContext}] [{RequestId}] {Message:lj}{NewLine}{Exception}");
 }

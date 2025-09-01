@@ -14,7 +14,7 @@ public class LoconetService : BackgroundService
     private readonly ILoconet2Table _locoTable;
 
     /// <summary>
-    /// Just until I learnt how to geht the one instance properly....
+    /// Just until I learnt how to get the one instance properly....
     /// </summary>
     public static LoconetService? Instance;
 
@@ -22,10 +22,10 @@ public class LoconetService : BackgroundService
 
     public int ClientCount => _connections.Count;
 
-    public LoconetService(ILogger<LoconetService>? logger, ILoconet2Table locoTable, LoconetOptions? options)
+    public LoconetService(ILogger<LoconetService> logger, ILoconet2Table locoTable, IOptions<LoconetOptions> options)
     {
-        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
-        _options = options ?? throw new ArgumentNullException(nameof(options));
+        _logger = logger;
+        _options = options.Value;
         _locoTable = locoTable;
         Instance = this;
     }

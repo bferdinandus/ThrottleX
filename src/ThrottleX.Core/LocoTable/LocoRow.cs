@@ -7,7 +7,7 @@ using ThrottleX.Core.Loconet;
 
 namespace ThrottleX.Core.LocoTable;
 
-public class LocoRowImpl : ILoconet2Row, IThrottle2Row
+public class LocoRow : ILoconet2Row, IThrottle2Row
 {
     private readonly ILogger _logger;
     private AllLoconetsReply? _allLoconetsReply = null;
@@ -15,20 +15,26 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
     /// <summary>
     /// This is a bit field with one flag per loconet connection.
     /// If the bit is set, the loco is enabled for this command station,
-    /// if the bit is zero, the loco is disable for this command station.
+    /// if the bit is zero, the loco is disabled for this command station.
     /// For now we simply set all possible bits. But here would be where we read from configuration
     /// or even manipulate per web interface in order to control on what command station a
-    /// single loco can be propergated.
+    /// single loco can be propagated.
     /// </summary>
     private readonly uint _LoconetEnabled = uint.MaxValue;
 
     private readonly FunctionProcessing _functions = new();
-
+    
+    public IAddress Address { get; }
+    public int SortOrder { get; }
+    public Speed RequestedSpeed { get; private set; } = new Speed();
+    public Direction RequestedDirection { get; private set; }
+    public int EmergencyStopCounter { get; private set; }
     public bool IsActive { get; private set; }
 
-    public LocoRowImpl(IAddress address, ILogger logger)
+    public LocoRow(IAddress address, ILogger logger, int sortOrder)
     {
         Address = address;
+        SortOrder = sortOrder;
         _logger = logger;
         IsActive = false;
         RequestedSpeed.SetStop();
@@ -120,13 +126,7 @@ public class LocoRowImpl : ILoconet2Row, IThrottle2Row
         _functions.SetMomentaryFunction(number, newMomentaryConfig);
     }
 
-    public IAddress Address { get; }
 
-    public Speed RequestedSpeed { get; private set; } = new Speed();
-
-    public Direction RequestedDirection { get; private set; }
-
-    public int EmergencyStopCounter { get; private set; }
 
     (byte id1, byte id2) ILoconet2Row.SlotId => (42, 1);//TODO: get low 7 bits of IP address?
 
