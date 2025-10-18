@@ -5,12 +5,19 @@ namespace ThrottleX.Core.Pages.Components;
 
 public class WiFredClients : HydroComponent
 {
+    private readonly WifredClientStore _clientStore;
     public string TestString { get; set; } = "Hello World";
-    public WiFredClient[] Clients { get; init; }
+    public WiFredClient[] Clients { get; private set; } = [];
 
     public WiFredClients(WifredClientStore clientStore)
     {
-        Clients = clientStore.GetAllClients().Select(c => new WiFredClient
+        _clientStore = clientStore;
+        RefreshClients();
+    }
+    
+    private void RefreshClients()
+    {
+        Clients = _clientStore.GetAllClients().Select(c => new WiFredClient
         {
             Name = c.Name,
             Uid = c.Id,
@@ -22,7 +29,7 @@ public class WiFredClients : HydroComponent
         }).ToArray();
     }
 
-    public void Add()
+    public void Refresh()
     {
         TestString = $"{TestString}.";
     }

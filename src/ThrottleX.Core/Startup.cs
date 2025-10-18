@@ -1,7 +1,6 @@
 ﻿using Hydro.Configuration;
 using Serilog;
 using Shared.LocoTable;
-using Shared.Models;
 using ThrottleX.Core.Loconet;
 using ThrottleX.Core.LocoTable;
 using WiThrottle;
@@ -31,10 +30,10 @@ public class Startup
         // Configure and add WiThrottle relates services
         services.AddSingleton<WifredClientStore>();
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
-        
+
         services.AddSingleton<WiThrottleService>();
         services.AddHostedService(p => p.GetRequiredService<WiThrottleService>());
-        
+
         // Configure and add website services
         services.AddRazorPages();
         services.AddHydro();
@@ -43,9 +42,12 @@ public class Startup
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
     {
         // Configure the HTTP request pipeline.
-        if (env.IsDevelopment()) {
+        if (env.IsDevelopment())
+        {
             app.UseDeveloperExceptionPage();
-        } else {
+        }
+        else
+        {
             app.UseExceptionHandler("/Home/Error");
         }
 
@@ -57,7 +59,10 @@ public class Startup
 
         app.UseAuthorization();
 
-        app.UseEndpoints(routeBuilder => { routeBuilder.MapRazorPages(); });
+        app.UseEndpoints(routeBuilder =>
+        {
+            routeBuilder.MapRazorPages();
+        });
         app.UseHydro(env); // Hydro
     }
 }
