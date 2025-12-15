@@ -48,7 +48,12 @@ public class WiThrottleService : BackgroundService
             .FirstOrDefault(i => i.Name.Equals(_options.NetworkInterfaceName, StringComparison.OrdinalIgnoreCase));
         if (foundNetworkInterface is not null)
         {
+            _logger.LogInformation("Networkinterface with name: {x} found. Advertising bonjour only on that interface.", _options.NetworkInterfaceName);
             ipAddresses = foundNetworkInterface.GetIPProperties().UnicastAddresses.Select(uc => uc.Address);
+        }
+        else
+        {
+            _logger.LogInformation("Advertising bonjour only on all network interfaces.");
         }
 
         ServiceProfile serviceProfile = new("Fremo WiThrottle", "_withrottle._tcp", _options.Port, ipAddresses);

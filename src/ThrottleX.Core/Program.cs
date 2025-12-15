@@ -8,7 +8,19 @@ return;
 static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
         .UseSerilog(ConfigSerilog)
-        .ConfigureWebHostDefaults(webBuilder => { webBuilder.UseStartup<Startup>(); });
+        .ConfigureHostConfiguration(config =>
+        {
+            config.AddJsonFile("appsettings.Pi.json", optional: true, reloadOnChange: true);
+        })
+        .ConfigureWebHostDefaults(webBuilder =>
+        {
+            webBuilder.UseStartup<Startup>();
+            
+            webBuilder.UseKestrel(serverOptions =>
+            {
+                serverOptions.ListenAnyIP(5000);
+            });
+        });
 
 static void ConfigSerilog(HostBuilderContext context, LoggerConfiguration configuration)
 {
@@ -18,5 +30,5 @@ static void ConfigSerilog(HostBuilderContext context, LoggerConfiguration config
         .WriteTo.File("Logs/ThrottleX-.log",
             Verbose,
             rollingInterval: RollingInterval.Day,
-            outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] [{RequestId}] {Message:lj}{NewLine}{Exception}{NewLine}");
+            outputTemplate: "[{Timestamp:yyyy/MM/dd HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] [{RequestId}] {Message:lj}{NewLine}{Exception}");
 }
