@@ -8,10 +8,6 @@ return;
 static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
         .UseSerilog(ConfigSerilog)
-        .ConfigureHostConfiguration(config =>
-        {
-            config.AddJsonFile("appsettings.Pi.json", optional: true, reloadOnChange: true);
-        })
         .ConfigureWebHostDefaults(webBuilder =>
         {
             webBuilder.UseStartup<Startup>();

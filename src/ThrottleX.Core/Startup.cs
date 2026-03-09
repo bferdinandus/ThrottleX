@@ -23,9 +23,19 @@ public class Startup
         services.AddSingleton<ILoconet2Table>(sp => sp.GetService<LocoTableImpl>()!);
         services.AddSingleton<IThrottle2Table>(sp => sp.GetService<LocoTableImpl>()!);
 
-        var loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
-        //services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
-        services.AddHostedService(sp => new LoconetService(sp.GetService<ILogger<LoconetService>>(), sp.GetService<ILoconet2Table>()!, loconetConfig));
+        LoconetOptions? loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
+        
+        Console.WriteLine("Loconet config host: " + loconetConfig?.Clients.Select(c => c.Host).First());
+        services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
+        
+        services.AddHostedService(sp =>
+        {
+            var loggerService = sp.GetService<ILogger<LoconetService>>();
+            Console.WriteLine("logger service:" + loggerService);
+            var loconet2Tableservice =  sp.GetService<ILoconet2Table>();
+            Console.WriteLine("loconet 2 table service: " + loconet2Tableservice);
+            return new LoconetService(loggerService, loconet2Tableservice!, loconetConfig);
+        });
 
         // Configure and add WiThrottle relates services
         services.AddSingleton<WifredClientStore>();

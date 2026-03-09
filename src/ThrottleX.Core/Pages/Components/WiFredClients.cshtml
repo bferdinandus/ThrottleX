@@ -11,7 +11,7 @@
             <th>IpAddress</th>
             <th>connected at</th>
         </tr>
-        @foreach(var client in Model.Clients)
+        @foreach (var client in Model.Clients)
         {
             <tr>
                 <td>@client.Name</td>
@@ -24,11 +24,22 @@
             </tr>
         }
     </table>
-    <div>@Model.TestString</div>
+    <div>Last refresh: @Model.LastRefresh</div>
     <div>
         Refresh clients:
-        <button hydro-on:click="@(() => Model.Refresh())">
+        <button id="refreshButton" hydro-on:click="@(() => Model.Refresh())">
             Refresh
         </button>
     </div>
+
+    <script>
+        // Function to refresh the component
+        function refreshComponent() {
+            // Select the button using its ID and trigger a click
+            document.getElementById('refreshButton').click();
+        }
+
+        // Set interval to refresh every 5 seconds (5000 milliseconds)
+        setInterval(refreshComponent, 5000);
+    </script>
 </div>
