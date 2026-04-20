@@ -17,21 +17,38 @@ public class WifredClientStore
         _loggerFactory = loggerFactory;
         _locoTable = locoTable;
     }
+
     public WifredClient GetOrCreate(string uid, string name)
     {
         return _clients.GetOrAdd(uid, _ =>
         {
             WifredClient newClient = new WifredClient(uid, name, _loggerFactory.CreateLogger<WifredClient>(), _locoTable);
             _logger.LogInformation("Created new WifredClient with name: `{name}` and uid: {uid}", name, uid);
-            
+
             return newClient;
         });
     }
 
     public WifredClient? GetClient(string id)
     {
-        _clients.TryGetValue(id, out var client);
+        _clients.TryGetValue(id, out WifredClient? client);
+
         return client;
+    }
+
+    public void ForgetClient(string id)
+    {
+        if (_clients.TryRemove(id, out WifredClient? client))
+        {
+            client.Disconnect();
+            client = null;
+            
+            _logger.LogInformation("Removed WifredClient with name: `{name}` and uid: {uid}", client.Name, client.Id);
+        }
+        else
+        {
+            _logger.LogInformation("Failed to remove WifredClient with uid: {uid}", id);
+        }
     }
 
     public void AddClient(WifredClient client)

@@ -20,9 +20,13 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Content Update="Pages\Components\LoconetConnections.cshtml">
-      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-      <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+    <Content Remove="appsettings.*.json"/>
+    <Content Include="appsettings.*.json">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </Content>
+    <Content Update="appsettings.$(Environment).json">
+      <CopyToPublishDirectory>Always</CopyToPublishDirectory>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
 

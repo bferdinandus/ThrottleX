@@ -2,7 +2,26 @@
 
 # Define variables
 PACKAGE_NAME="throttle-x"
-VERSION="0.1"
+VERSION_FILE="version.txt"
+
+# Check if the version file exists; if not, create it
+if [ ! -f "${VERSION_FILE}" ]; then
+    echo "0.1" > "${VERSION_FILE}"
+fi
+
+# Read the current version from the file
+VERSION=$(cat "${VERSION_FILE}")
+
+# Increment the version (Assuming a simple semantic versioning scenario)
+IFS='.' read -r major minor <<< "$VERSION"
+minor=$((minor + 1))  # Increment the minor version
+VERSION="${major}.${minor}"
+
+# Write the new version back to the version file
+echo "${VERSION}" > "${VERSION_FILE}"
+
+echo "Building version: ${VERSION}" 
+
 ARCHITECTURE="arm64"  # Updated to arm64 for Raspberry Pi 4B
 MAINTAINER="Ben Ferdinandus <2flyfish@gmail.com>"
 DESCRIPTION="Run a wi-throttle service."
@@ -11,7 +30,6 @@ SUBFOLDER="throttle-x"  # Subfolder for organizing files
 
 # Cleanup previous build directories and packages
 rm -rf "${PACKAGE_NAME}"  # Remove the existing package structure if it exists
-rm -f "${PACKAGE_NAME}.deb"  # Remove the existing .deb package if it exists
 
 # Create package structure
 mkdir -p "${PACKAGE_NAME}/DEBIAN"
@@ -105,4 +123,6 @@ cp -r ./src/ThrottleX.Core/bin/Release/net8.0/linux-arm64/publish/* "${PACKAGE_N
 # Build the .deb package with gzip compression
 dpkg-deb -Zgzip --build "${PACKAGE_NAME}"
 
-echo "Package ${PACKAGE_NAME}.deb has been created."
+mv ${PACKAGE_NAME}.deb ${PACKAGE_NAME}-${VERSION}.deb
+
+echo "Package ${PACKAGE_NAME}-${VERSION}.deb has been created."

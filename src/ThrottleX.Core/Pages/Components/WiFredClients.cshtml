@@ -17,14 +17,15 @@
                 <td>@client.Name</td>
                 <td>@client.Uid</td>
                 <td>@client.Locos</td>
-                <td>@client.LastMessage</td>
+                <td>@client.LastMessage.ToString("HH:mm:ss dd-MM-yyyy")</td>
                 <td>@client.Status</td>
                 <td><a href="http://@client.IpAddress" target="_blank">@client.IpAddress</a></td>
-                <td>@client.ConnectedAt</td>
+                <td>@client.ConnectedAt?.ToString("HH:mm:ss dd-MM-yyyy")</td>
+                <td><button id="forget-button" hydro-on:click="@(() => Model.Forget(client.Uid))">forget</button></td>
             </tr>
         }
     </table>
-    <div>Last refresh: @Model.LastRefresh</div>
+    <div>Last refresh: @Model.LastRefresh.ToString("HH:mm:ss dd-MM-yyyy")</div>
     <div>
         Refresh clients:
         <button id="refreshButton" hydro-on:click="@(() => Model.Refresh())">

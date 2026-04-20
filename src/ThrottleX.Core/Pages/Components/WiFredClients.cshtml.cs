@@ -6,7 +6,7 @@ namespace ThrottleX.Core.Pages.Components;
 public class WiFredClients : HydroComponent
 {
     private readonly WifredClientStore _clientStore;
-    public DateTime LastRefresh { get; set; } = DateTime.UtcNow;
+    public DateTime LastRefresh { get; set; } = DateTime.Now;
     public WiFredClient[] Clients { get; private set; } = [];
 
     public WiFredClients(WifredClientStore clientStore)
@@ -31,7 +31,12 @@ public class WiFredClients : HydroComponent
 
     public void Refresh()
     {
-        LastRefresh = DateTime.UtcNow;
+        LastRefresh = DateTime.Now;
+    }
+
+    public void Forget(string clientUid)
+    {
+        _clientStore.ForgetClient(clientUid);
     }
 }
 
