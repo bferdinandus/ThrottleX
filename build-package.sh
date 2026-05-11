@@ -1,8 +1,28 @@
 #!/bin/bash
+set -e
 
 # Define variables
 PACKAGE_NAME="throttle-x"
 VERSION_FILE="version.txt"
+TEMPLATES_DIR="templates"
+ARCHITECTURE="arm64"  # Updated to arm64 for Raspberry Pi 4B
+MAINTAINER="Ben Ferdinandus <2flyfish@gmail.com>"
+DESCRIPTION="Run a wi-throttle service."
+EXECUTABLE="ThrottleX.Core"
+SUBFOLDER="throttle-x"  # Subfolder for organizing files
+
+PKG_DIR="${PACKAGE_NAME}"
+DEBIAN_DIR="${PKG_DIR}/DEBIAN"
+SHARE_DIR="${PKG_DIR}/usr/local/share/${SUBFOLDER}"
+SYSTEMD_DIR="${PKG_DIR}/etc/systemd/system"
+
+# Ensure templates exist
+for f in control.tpl preinst.tpl postinst.tpl service.tpl; do
+  if [ ! -f "${TEMPLATES_DIR}/${f}" ]; then
+    echo "Missing template: ${TEMPLATES_DIR}/${f}"
+    exit 1
+  fi
+done
 
 # Check if the version file exists; if not, create it
 if [ ! -f "${VERSION_FILE}" ]; then
@@ -22,107 +42,51 @@ echo "${VERSION}" > "${VERSION_FILE}"
 
 echo "Building version: ${VERSION}" 
 
-ARCHITECTURE="arm64"  # Updated to arm64 for Raspberry Pi 4B
-MAINTAINER="Ben Ferdinandus <2flyfish@gmail.com>"
-DESCRIPTION="Run a wi-throttle service."
-EXECUTABLE="ThrottleX.Core"
-SUBFOLDER="throttle-x"  # Subfolder for organizing files
-
 # Cleanup previous build directories and packages
-rm -rf "${PACKAGE_NAME}"  # Remove the existing package structure if it exists
+rm -rf "${PKG_DIR}"  # Remove the existing package structure if it exists
 
 # Create package structure
-mkdir -p "${PACKAGE_NAME}/DEBIAN"
-mkdir -p "${PACKAGE_NAME}/usr/local/share/${SUBFOLDER}"  # Create subfolder
-mkdir -p "${PACKAGE_NAME}/etc/systemd/system"
+mkdir -p "${DEBIAN_DIR}"
+mkdir -p "${SHARE_DIR}"  # Create subfolder
+mkdir -p "${SYSTEMD_DIR}"
+
+# Helper: copy template and replace placeholders (safe, portable)
+render_template() {
+  local tpl="$1"; local dest="$2"
+  sed \
+    -e "s|{{PACKAGE_NAME}}|${PACKAGE_NAME}|g" \
+    -e "s|{{VERSION}}|${VERSION}|g" \
+    -e "s|{{ARCHITECTURE}}|${ARCHITECTURE}|g" \
+    -e "s|{{MAINTAINER}}|${MAINTAINER}|g" \
+    -e "s|{{DESCRIPTION}}|${DESCRIPTION}|g" \
+    -e "s|{{EXECUTABLE}}|${EXECUTABLE}|g" \
+    -e "s|{{SUBFOLDER}}|${SUBFOLDER}|g" \
+    "${TEMPLATES_DIR}/${tpl}" > "${dest}"
+}
 
 # Create control file
-cat <<EOF > "${PACKAGE_NAME}/DEBIAN/control"
-Package: ${PACKAGE_NAME}
-Version: ${VERSION}
-Architecture: ${ARCHITECTURE}
-Maintainer: ${MAINTAINER}
-Depends: systemd
-Section: utils
-Priority: optional
-Description: ${DESCRIPTION}
-EOF
+render_template "control.tpl" "${DEBIAN_DIR}/control"
 
 # Create pre-installation script
-cat <<EOF > "${PACKAGE_NAME}/DEBIAN/preinst"
-#!/bin/bash
-set -e
-
-# Check if the service is active, and stop it if it is
-if systemctl is-active --quiet ${EXECUTABLE}.service; then
-    echo "Stopping the existing service ${EXECUTABLE} before installation."
-    systemctl stop ${EXECUTABLE}.service
-fi
-
-exit 0
-EOF
-
-chmod 755 "${PACKAGE_NAME}/DEBIAN/preinst"
+render_template "preinst.tpl" "${DEBIAN_DIR}/preinst"
+chmod 755 "${DEBIAN_DIR}/preinst"
 
 # Create post-installation script
-cat <<EOF > "${PACKAGE_NAME}/DEBIAN/postinst"
-#!/bin/bash
-set -e
-
-# Create the system group 'throttlex', forcing it if it already exists
-groupadd --force --system throttlex
-
-# Check if the user 'throttlex' exists, and create it if it does not
-if ! id -u throttlex &>/dev/null; then
-    useradd --system --comment "User for Throttlex service" \
-        --shell "/bin/false" --gid throttlex throttlex
-fi
-        
-# Change ownership of the files to throttlex
-chown -R throttlex:throttlex /usr/local/share/${SUBFOLDER}
-
-# Set appropriate file permissions
-chmod +x /usr/local/share/${SUBFOLDER}/${EXECUTABLE}
-
-echo "Enabling service..." | logger
-# Enable the service
-systemctl enable ${EXECUTABLE}.service
-
-# Start the service
-echo "Starting service..." | logger
-systemctl start ${EXECUTABLE}.service
-
-exit 0
-EOF
-
-chmod 755 "${PACKAGE_NAME}/DEBIAN/postinst"
+render_template "postinst.tpl" "${DEBIAN_DIR}/postinst"
+chmod 755 "${DEBIAN_DIR}/postinst"
 
 # Create service file with network dependencies and user directive
-cat <<EOF > "${PACKAGE_NAME}/etc/systemd/system/${EXECUTABLE}.service"
-[Unit]
-Description=${EXECUTABLE} Daemon
-Wants=network-online.target
-After=network-online.target
-
-[Service]
-User=throttlex
-ExecStart=/usr/local/share/${SUBFOLDER}/${EXECUTABLE}
-WorkingDirectory=/usr/local/share/${SUBFOLDER}
-Restart=no
-
-[Install]
-WantedBy=multi-user.target
-EOF
+render_template "service.tpl" "${SYSTEMD_DIR}/${EXECUTABLE}.service"
 
 # Publish the application targeting the specific project file
 dotnet publish ./src/ThrottleX.Core/ThrottleX.Core.csproj -c Release -r linux-arm64 --self-contained -p:PublishSingleFile=true
 
 # Copy the built files to the package structure inside the subfolder
-cp -r ./src/ThrottleX.Core/bin/Release/net8.0/linux-arm64/publish/* "${PACKAGE_NAME}/usr/local/share/${SUBFOLDER}/"
+cp -r ./src/ThrottleX.Core/bin/Release/net8.0/linux-arm64/publish/* "${SHARE_DIR}/"
 
 # Build the .deb package with gzip compression
-dpkg-deb -Zgzip --build "${PACKAGE_NAME}"
+dpkg-deb -Zgzip --build "${PKG_DIR}"
 
-mv ${PACKAGE_NAME}.deb ${PACKAGE_NAME}-${VERSION}.deb
+mv ${PKG_DIR}.deb ${PKG_DIR}-${VERSION}.deb
 
-echo "Package ${PACKAGE_NAME}-${VERSION}.deb has been created."
+echo "Package ${PKG_DIR}-${VERSION}.deb has been created."
