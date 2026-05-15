@@ -13,7 +13,7 @@ public class WifredClient
     public string Name { get; private set; }
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
-    
+
     public bool IsConnected => _customTcpClient?.IsConnected ?? false;
     public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
@@ -27,7 +27,7 @@ public class WifredClient
     {
         _logger = logger;
         _locoTable = locoTable;
-        
+
         Id = id;
         Name = name;
     }
@@ -38,13 +38,13 @@ public class WifredClient
         while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
             WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(stoppingToken));
-            _logger.LogInformation("Message received: {command}", command);
+            _logger.LogInformation("[{uid}] Message received: {command}", Id, command);
 
             // ReSharper disable once SwitchStatementMissingSomeEnumCasesNoDefault
             switch (command.Type)
             {
                 case CommandType.Quit:
-                    _logger.LogInformation("{Name} says bye.", Name);
+                    _logger.LogInformation("[{uid}] {Name} says bye.", Id, Name);
                     Disconnect();
                     break;
                 case CommandType.MultiThrottle:
@@ -54,16 +54,19 @@ public class WifredClient
                 case CommandType.Unknown:
                     break;
             }
-            LastMessage = DateTime.UtcNow;
+
+            LastMessage = DateTime.Now;
         }
     }
 
     public void UpdateConnection(CustomTcpClient client)
     {
         if (IsConnected) Disconnect();
+
+        _myLocos.Clear();
         
         _customTcpClient = client;
-        ConnectedAt = DateTime.UtcNow;
+        ConnectedAt = DateTime.Now;
     }
 
     public void Disconnect()
@@ -95,7 +98,7 @@ public class WifredClient
             case '+': await MtAddAsync(mtIdentifier, address); break;
             case '-': await MtRemoveAsync(mtIdentifier, address); break;
             case 'A': await MtActionAsync(mtIdentifier, address, commandParts[1]); break;
-            default: _logger.LogError("{S}: Received unknown command: {C}", Name, first[0]); break;
+            default: _logger.LogError("[{uid}] {S}: Received unknown command: {C}", Id, Name, first[0]); break;
         }
     }
 
@@ -163,7 +166,7 @@ public class WifredClient
         };
 
         if (action == null)
-            _logger.LogWarning("Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", cmd, (ThrottleCommand)cmd);
+            _logger.LogWarning("[{uid}] Command '{Cmd}'={ThrottleCommand} not implemented, ignoring...", Id, cmd, (ThrottleCommand)cmd);
         else
             ForSelectedRows(address, action);
     }
@@ -172,7 +175,7 @@ public class WifredClient
     {
         if (address != null && !_myLocos.ContainsKey(address))
         {
-            _logger.LogWarning("Throttle wants so remove an address that we don't have under control, ignoring this!");
+            _logger.LogWarning("[{uid}] Throttle wants so remove an address that we don't have under control, ignoring this!", Id);
             return;
         }
 
@@ -197,11 +200,11 @@ public class WifredClient
         var locoRow = _locoTable.GetRowForAddress(address);
         if (locoRow.IsActive)
         {
-            _logger.LogError("got loco row for address {LocoRowAddress} that is already active, refusing to steal!", locoRow.Address);
+            _logger.LogError("[{uid}] got loco row for address {LocoRowAddress} that is already active, refusing to steal!", Id, locoRow.Address);
             await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
         }
 
-        _logger.LogInformation("{Name}: got loco row for address {LocoRowAddress}, activating now", Name, locoRow.Address);
+        _logger.LogInformation("[{uid}] {Name}: got loco row for address {LocoRowAddress}, activating now", Id, Name, locoRow.Address);
 
         lock (_locoTable) // lock scope is entire table in order to synchronize with cleanup thread
         {
@@ -213,7 +216,7 @@ public class WifredClient
         switch (csResult)
         {
             case OccupySlotResult.Success:
-                _logger.Log(LogLevel.Information, "{Name}: command station success", Name);
+                _logger.Log(LogLevel.Information, "[{uid}] {Name}: command station success", Id, Name);
                 await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}+{address.EncodeWtAddress()}{Constants.Separator}")!;
                 var prefix = $"M{mtIdentifier}A{address.EncodeWtAddress()}{Constants.Separator}";
                 var slot = slotData!.Value; // not null in this case
@@ -223,12 +226,12 @@ public class WifredClient
                 return; // finished for now
 
             case OccupySlotResult.Occupied:
-                _logger.LogError("{Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Name, address);
+                _logger.LogError("[{uid}] {Name}: Loconet sais the address {Address} is already active, refusing to steal, deactivating!", Id, Name, address);
                 await _customTcpClient?.SendMessageAsync($"M{mtIdentifier}S{address.EncodeWtAddress()}{Constants.Separator}")!;
                 break; // deactivate below
 
             default: // failure
-                _logger.LogWarning("{Name}: command station failure for address {Address}, deactivating", Name, address);
+                _logger.LogWarning("[{uid}] {Name}: command station failure for address {Address}, deactivating", Id, Name, address);
                 //TODO: what to answer for failure???
                 break; // deactivate below
         }
@@ -252,7 +255,7 @@ public class WifredClient
             if (_myLocos.ContainsKey(address))
                 action(_myLocos[address]);
             else
-                _logger.LogWarning("{Name}: loco {Address} is not currently under control!?", Name, address);
+                _logger.LogWarning("[{uid}] {Name}: loco {Address} is not currently under control!?", Id, Name, address);
         }
     }
 
@@ -266,7 +269,7 @@ public class WifredClient
 
     private Exception Panic(LogLevel level, string msg)
     {
-        _logger.Log(level, msg);
+        _logger.Log(level, "[{uid}] {msg}", Id, msg);
         return new InvalidOperationException($"{Name}: {msg}");
     }
 

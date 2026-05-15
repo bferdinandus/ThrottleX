@@ -11,6 +11,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "projectFiles", "projectFile
 		.gitignore = .gitignore
 		global.json = global.json
 		README.md = README.md
+		LICENSE = LICENSE
+		build-package.sh = build-package.sh
 	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{EF36F24A-097A-4EEA-A400-C95DD50F195F}"
