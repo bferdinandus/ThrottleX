@@ -24,12 +24,14 @@ public class WifredClient
     private CustomTcpClient? _customTcpClient;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
     private readonly IThrottle2Table _locoTable;
+    private readonly HttpClient _httpClient;
     private CancellationToken _stoppingToken;
 
-    public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable)
+    public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable, HttpClient httpClient)
     {
         _logger = logger;
         _locoTable = locoTable;
+        _httpClient = httpClient;
 
         Id = id;
         Name = name;
@@ -39,6 +41,9 @@ public class WifredClient
     {
         await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
+        
+        _ = BatteryVoltageLoopAsync(stoppingToken);
+
         while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
             WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(stoppingToken));
@@ -63,6 +68,18 @@ public class WifredClient
         }
     }
 
+    private async Task BatteryVoltageLoopAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            if (IsConnected)
+            {
+                await UpdateBatteryVoltageAsync();
+            }
+        }
+    }
+
     public void UpdateConnection(CustomTcpClient client)
     {
         if (IsConnected) Disconnect();
@@ -79,10 +96,7 @@ public class WifredClient
     
         try
         {
-            using var httpClient = new HttpClient();
-            httpClient.Timeout = TimeSpan.FromSeconds(5);
-        
-            var xmlContent = await httpClient.GetStringAsync(url, _stoppingToken);
+            var xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
             
             if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
             {

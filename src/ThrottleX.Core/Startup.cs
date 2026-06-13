@@ -38,6 +38,10 @@ public class Startup
         });
 
         // Configure and add WiThrottle relates services
+        services.AddHttpClient("WiFredClient", client =>
+        {
+            client.Timeout = TimeSpan.FromSeconds(5);
+        });
         services.AddSingleton<WifredClientStore>();
         services.Configure<WiThrottleOptions>(_configuration.GetSection("WiThrottle"));
 

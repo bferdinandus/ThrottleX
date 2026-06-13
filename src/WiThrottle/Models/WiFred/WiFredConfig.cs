@@ -21,7 +21,7 @@ public class WiFredConfig
     public ValueElement<int> BatteryVoltage { get; set; } = new();
 
     [XmlElement("batteryLow")]
-    public ValueElement<int> BatteryLow { get; set; } = new();
+    public ValueElement<bool> BatteryLow { get; set; } = new();
 
     [XmlElement("WiFi")]
     public WiFiConfig WiFi { get; set; } = new();
