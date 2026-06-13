@@ -8,6 +8,7 @@
             <th>loco(s)</th>
             <th>last message at</th>
             <th>status</th>
+            <th>Battery Voltage</th>
             <th>IpAddress</th>
             <th>connected at</th>
         </tr>
@@ -19,6 +20,7 @@
                 <td>@client.Locos</td>
                 <td>@client.LastMessage.ToString("HH:mm:ss dd-MM-yyyy")</td>
                 <td>@client.Status</td>
+                <td>@client.BatteryVoltage mV</td>
                 <td><a href="http://@client.IpAddress" target="_blank">@client.IpAddress</a></td>
                 <td>@client.ConnectedAt?.ToString("HH:mm:ss dd-MM-yyyy")</td>
                 <td><button id="forget-button" hydro-on:click="@(() => Model.Forget(client.Uid))">forget</button></td>

@@ -40,10 +40,11 @@ public class WifredClientStore
     {
         if (_clients.TryRemove(id, out WifredClient? client))
         {
+            string clientName = client.Name;
             client.Disconnect();
             client = null;
             
-            _logger.LogInformation("Removed WifredClient with name: `{name}` and uid: {uid}", client.Name, client.Id);
+            _logger.LogInformation("Removed WifredClient with name: `{name}` and uid: {uid}", clientName, id);
         }
         else
         {

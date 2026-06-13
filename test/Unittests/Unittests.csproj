@@ -24,6 +24,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\..\src\Loconet\Loconet.csproj" />
+      <ProjectReference Include="..\..\src\WiThrottle\WiThrottle.csproj" />
     </ItemGroup>
 
     <ItemGroup>

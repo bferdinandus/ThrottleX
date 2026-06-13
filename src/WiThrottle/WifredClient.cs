@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.LocoTable;
 using Shared.Models;
+using WiThrottle.Models.WiFred;
 
 namespace WiThrottle;
 
@@ -13,8 +14,10 @@ public class WifredClient
     public string Name { get; private set; }
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
+    public int BatteryVoltage { get; private set; }
 
     public bool IsConnected => _customTcpClient?.IsConnected ?? false;
+
     public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
 
@@ -34,6 +37,7 @@ public class WifredClient
 
     public async Task StartProcessingAsync(CancellationToken stoppingToken)
     {
+        await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
         while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
@@ -67,6 +71,39 @@ public class WifredClient
         
         _customTcpClient = client;
         ConnectedAt = DateTime.Now;
+    }
+
+    private async Task UpdateBatteryVoltageAsync()
+    {
+        var url = new Uri($"http://{GetIpAddress()}/api/getConfigXML");
+    
+        try
+        {
+            using var httpClient = new HttpClient();
+            httpClient.Timeout = TimeSpan.FromSeconds(5);
+        
+            var xmlContent = await httpClient.GetStringAsync(url, _stoppingToken);
+            
+            if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
+            {
+                xmlContent = "<?xml" + xmlContent.Substring(5);
+            }
+        
+            var serializer = new System.Xml.Serialization.XmlSerializer(typeof(WiFredConfig));
+            using var stringReader = new StringReader(xmlContent);
+        
+            var config = (WiFredConfig?)serializer.Deserialize(stringReader);
+        
+            if (config != null)
+            {
+                BatteryVoltage = config.BatteryVoltage.Value;
+                _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV", Id, BatteryVoltage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[{uid}] Failed to update battery voltage from {Url}", Id, url);
+        }
     }
 
     public void Disconnect()
