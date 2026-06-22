@@ -1,6 +1,8 @@
 ﻿using System.Collections.Concurrent;
 using Microsoft.Extensions.Logging;
 using Shared.LocoTable;
+using System.Net.Http;
+using Microsoft.Extensions.Http;
 
 namespace WiThrottle;
 
@@ -9,20 +11,23 @@ public class WifredClientStore
     private readonly ILogger<WifredClientStore> _logger;
     private readonly ILoggerFactory _loggerFactory;
     private readonly IThrottle2Table _locoTable;
+    private readonly IHttpClientFactory _httpClientFactory;
     private readonly ConcurrentDictionary<string, WifredClient> _clients = new();
 
-    public WifredClientStore(ILogger<WifredClientStore> logger, ILoggerFactory loggerFactory, IThrottle2Table locoTable)
+    public WifredClientStore(ILogger<WifredClientStore> logger, ILoggerFactory loggerFactory, IThrottle2Table locoTable, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
         _loggerFactory = loggerFactory;
         _locoTable = locoTable;
+        _httpClientFactory = httpClientFactory;
     }
 
     public WifredClient GetOrCreate(string uid, string name)
     {
         return _clients.GetOrAdd(uid, _ =>
         {
-            WifredClient newClient = new WifredClient(uid, name, _loggerFactory.CreateLogger<WifredClient>(), _locoTable);
+            var httpClient = _httpClientFactory.CreateClient("WiFredClient");
+            WifredClient newClient = new WifredClient(uid, name, _loggerFactory.CreateLogger<WifredClient>(), _locoTable, httpClient);
             _logger.LogInformation("Created new WifredClient with name: `{name}` and uid: {uid}", name, uid);
 
             return newClient;
@@ -40,10 +45,11 @@ public class WifredClientStore
     {
         if (_clients.TryRemove(id, out WifredClient? client))
         {
+            string clientName = client.Name;
             client.Disconnect();
             client = null;
             
-            _logger.LogInformation("Removed WifredClient with name: `{name}` and uid: {uid}", client.Name, client.Id);
+            _logger.LogInformation("Removed WifredClient with name: `{name}` and uid: {uid}", clientName, id);
         }
         else
         {

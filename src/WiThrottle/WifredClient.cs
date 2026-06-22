@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.LocoTable;
 using Shared.Models;
+using WiThrottle.Models.WiFred;
 
 namespace WiThrottle;
 
@@ -13,20 +14,24 @@ public class WifredClient
     public string Name { get; private set; }
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
+    public int BatteryVoltage { get; private set; }
 
     public bool IsConnected => _customTcpClient?.IsConnected ?? false;
+
     public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
 
     private CustomTcpClient? _customTcpClient;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
     private readonly IThrottle2Table _locoTable;
+    private readonly HttpClient _httpClient;
     private CancellationToken _stoppingToken;
 
-    public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable)
+    public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable, HttpClient httpClient)
     {
         _logger = logger;
         _locoTable = locoTable;
+        _httpClient = httpClient;
 
         Id = id;
         Name = name;
@@ -34,7 +39,11 @@ public class WifredClient
 
     public async Task StartProcessingAsync(CancellationToken stoppingToken)
     {
+        await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
+        
+        _ = BatteryVoltageLoopAsync(stoppingToken);
+
         while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
             WiThrottleCommand command = WiThrottleMessageProcessor.ParseCommand(await _customTcpClient!.ReadNextMessageAsync(stoppingToken));
@@ -59,6 +68,18 @@ public class WifredClient
         }
     }
 
+    private async Task BatteryVoltageLoopAsync(CancellationToken stoppingToken)
+    {
+        while (!stoppingToken.IsCancellationRequested)
+        {
+            await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+            if (IsConnected)
+            {
+                await UpdateBatteryVoltageAsync();
+            }
+        }
+    }
+
     public void UpdateConnection(CustomTcpClient client)
     {
         if (IsConnected) Disconnect();
@@ -67,6 +88,36 @@ public class WifredClient
         
         _customTcpClient = client;
         ConnectedAt = DateTime.Now;
+    }
+
+    private async Task UpdateBatteryVoltageAsync()
+    {
+        var url = new Uri($"http://{GetIpAddress()}/api/getConfigXML");
+    
+        try
+        {
+            var xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
+            
+            if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
+            {
+                xmlContent = "<?xml" + xmlContent.Substring(5);
+            }
+        
+            var serializer = new System.Xml.Serialization.XmlSerializer(typeof(WiFredConfig));
+            using var stringReader = new StringReader(xmlContent);
+        
+            var config = (WiFredConfig?)serializer.Deserialize(stringReader);
+        
+            if (config != null)
+            {
+                BatteryVoltage = config.BatteryVoltage.Value;
+                _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV", Id, BatteryVoltage);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "[{uid}] Failed to update battery voltage from {Url}", Id, url);
+        }
     }
 
     public void Disconnect()

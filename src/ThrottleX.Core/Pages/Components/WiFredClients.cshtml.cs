@@ -1,4 +1,5 @@
 using Hydro;
+using Microsoft.AspNetCore.Mvc.Razor;
 using WiThrottle;
 
 namespace ThrottleX.Core.Pages.Components;
@@ -25,7 +26,8 @@ public class WiFredClients : HydroComponent
             Locos = c.GetLocoAdresses(),
             Status = c.IsConnected ? WiFredStatus.Online : WiFredStatus.Offline,
             LastMessage = c.LastMessage,
-            ConnectedAt = c.ConnectedAt
+            ConnectedAt = c.ConnectedAt,
+            BatteryVoltage = c.BatteryVoltage
         }).ToArray();
     }
 
@@ -49,6 +51,7 @@ public class WiFredClient
     public WiFredStatus Status { get; init; }
     public DateTime LastMessage { get; init; }
     public DateTime? ConnectedAt { get; init; }
+    public int BatteryVoltage { get; set; }
 }
 
 public enum WiFredStatus
