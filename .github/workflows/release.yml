@@ -1,0 +1,68 @@
+name: Build and Release Package
+
+on:
+  push:
+    tags:
+      - 'v*'
+      - '[0-9]+.[0-9]+*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g. 0.6 or v0.6). Leave empty to auto-increment version.txt'
+        required: false
+        default: ''
+
+permissions:
+  contents: write
+
+jobs:
+  build-and-release:
+    name: Build Debian Package & Release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+          global-json-file: 'global.json'
+
+      - name: Run Tests
+        run: dotnet test --configuration Release
+
+      - name: Build Debian Package
+        id: build_package
+        run: |
+          chmod +x ./build-package.sh
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
+            ./build-package.sh "${{ github.event.inputs.version }}"
+            RELEASE_TAG="v$(cat version.txt)"
+          elif [ "${{ github.ref_type }}" = "tag" ]; then
+            ./build-package.sh "${{ github.ref_name }}"
+            RELEASE_TAG="${{ github.ref_name }}"
+          else
+            ./build-package.sh
+            RELEASE_TAG="v$(cat version.txt)"
+          fi
+          
+          VERSION=$(cat version.txt)
+          DEB_FILE=$(ls throttle-x-*.deb | head -n 1)
+          
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "deb_file=${DEB_FILE}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.build_package.outputs.release_tag }}
+          name: Release ${{ steps.build_package.outputs.release_tag }}
+          files: ${{ steps.build_package.outputs.deb_file }}
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -24,21 +24,30 @@ for f in control.tpl preinst.tpl postinst.tpl service.tpl; do
   fi
 done
 
-# Check if the version file exists; if not, create it
-if [ ! -f "${VERSION_FILE}" ]; then
-    echo "0.1" > "${VERSION_FILE}"
+# Determine version: prioritize CLI argument or env var, otherwise auto-increment from file
+if [ -n "$1" ]; then
+    VERSION="${1#v}"
+    echo "${VERSION}" > "${VERSION_FILE}"
+elif [ -n "$VERSION" ]; then
+    VERSION="${VERSION#v}"
+    echo "${VERSION}" > "${VERSION_FILE}"
+else
+    # Check if the version file exists; if not, create it
+    if [ ! -f "${VERSION_FILE}" ]; then
+        echo "0.1" > "${VERSION_FILE}"
+    fi
+
+    # Read the current version from the file
+    CURRENT_VERSION=$(cat "${VERSION_FILE}")
+
+    # Increment the version (Assuming a simple semantic versioning scenario)
+    IFS='.' read -r major minor <<< "$CURRENT_VERSION"
+    minor=$((minor + 1))  # Increment the minor version
+    VERSION="${major}.${minor}"
+
+    # Write the new version back to the version file
+    echo "${VERSION}" > "${VERSION_FILE}"
 fi
-
-# Read the current version from the file
-VERSION=$(cat "${VERSION_FILE}")
-
-# Increment the version (Assuming a simple semantic versioning scenario)
-IFS='.' read -r major minor <<< "$VERSION"
-minor=$((minor + 1))  # Increment the minor version
-VERSION="${major}.${minor}"
-
-# Write the new version back to the version file
-echo "${VERSION}" > "${VERSION_FILE}"
 
 echo "Building version: ${VERSION}" 
 
