@@ -25,7 +25,21 @@ public class LoconetClient : IDisposable
     private readonly AutoResetEvent _replyEvent = new(false);
     public enum LoconetState { Start, Connect, Init, Operation, Wait, Shutdown };
 
-    public LoconetState State { get; private set; } = LoconetState.Start;
+    public event Action? OnStateChanged;
+
+    private LoconetState _state = LoconetState.Start;
+    public LoconetState State 
+    { 
+        get => _state; 
+        private set 
+        { 
+            if (_state != value) 
+            { 
+                _state = value; 
+                OnStateChanged?.Invoke(); 
+            } 
+        } 
+    }
     private TcpClient? _client;
     private bool _sentError;
     private bool _nextReceiveIsReply = false;
@@ -300,6 +314,7 @@ public class LoconetClient : IDisposable
     protected virtual void OnVersion(string param)
     {
         ServerVersionInfo = param;
+        OnStateChanged?.Invoke();
     }
 
     /// <summary>

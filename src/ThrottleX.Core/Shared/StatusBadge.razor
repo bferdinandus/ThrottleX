@@ -1,0 +1,35 @@
+<span class="badge @BadgeClass d-inline-flex align-items-center gap-1">
+    <span class="status-dot @DotClass"></span>
+    @Text
+</span>
+
+@code {
+    [Parameter]
+    public bool IsActive { get; set; }
+
+    [Parameter]
+    public string? Text { get; set; }
+
+    [Parameter]
+    public string? StatusType { get; set; } // "success", "warning", "danger", "info", "secondary"
+
+    private string EffectiveType => StatusType ?? (IsActive ? "success" : "secondary");
+
+    private string BadgeClass => EffectiveType switch
+    {
+        "success" => "bg-success-subtle text-success-emphasis border border-success-subtle",
+        "warning" => "bg-warning-subtle text-warning-emphasis border border-warning-subtle",
+        "danger" => "bg-danger-subtle text-danger-emphasis border border-danger-subtle",
+        "info" => "bg-info-subtle text-info-emphasis border border-info-subtle",
+        _ => "bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle"
+    };
+
+    private string DotClass => EffectiveType switch
+    {
+        "success" => "status-dot-success",
+        "warning" => "status-dot-warning",
+        "danger" => "status-dot-danger",
+        "info" => "status-dot-info",
+        _ => "status-dot-secondary"
+    };
+}

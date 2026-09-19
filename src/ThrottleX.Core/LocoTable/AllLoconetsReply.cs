@@ -3,8 +3,8 @@
 using global::Loconet;
 using ThrottleX.Core.Loconet;
 using Microsoft.Extensions.Logging;
-using Shared.LocoTable;
-using static Shared.LocoTable.OccupySlotResult;
+using global::Shared.LocoTable;
+using static global::Shared.LocoTable.OccupySlotResult;
 
 public sealed class AllLoconetsReply : IDisposable
 {

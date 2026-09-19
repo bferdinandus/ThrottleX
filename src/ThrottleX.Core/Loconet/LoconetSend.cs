@@ -1,9 +1,9 @@
-﻿using Loconet;
-using Loconet.Msg;
-using Loconet.Msg.Accessor;
-using Shared;
-using Shared.LocoTable;
-using Shared.Models;
+using global::Loconet;
+using global::Loconet.Msg;
+using global::Loconet.Msg.Accessor;
+using global::Shared;
+using global::Shared.LocoTable;
+using global::Shared.Models;
 using ThrottleX.Core.LocoTable;
 using static ThrottleX.Core.Loconet.SlotControl.State;
 
@@ -31,8 +31,35 @@ public class LoconetSend : IDisposable
         Exception,
     }
 
-    public EState State { private set; get; } = EState.Init;
-    public CommandStation? GuessedCommandStation { private set; get; }
+    public event Action? OnStateChanged;
+
+    private EState _state = EState.Init;
+    public EState State 
+    { 
+        get => _state; 
+        private set 
+        { 
+            if (_state != value) 
+            { 
+                _state = value; 
+                OnStateChanged?.Invoke(); 
+            } 
+        } 
+    }
+
+    private CommandStation? _guessedCommandStation;
+    public CommandStation? GuessedCommandStation 
+    { 
+        get => _guessedCommandStation; 
+        private set 
+        { 
+            if (_guessedCommandStation != value) 
+            { 
+                _guessedCommandStation = value; 
+                OnStateChanged?.Invoke(); 
+            } 
+        } 
+    }
 
     public LoconetSend(LoconetClient loconetClient, CommandStationMirror mirror, ILoconet2Table locoTable)
     {

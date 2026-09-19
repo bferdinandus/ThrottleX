@@ -27,6 +27,13 @@ public class WifredClient
     private readonly HttpClient _httpClient;
     private CancellationToken _stoppingToken;
 
+    public event Action? OnClientChanged;
+
+    public void NotifyClientChanged()
+    {
+        OnClientChanged?.Invoke();
+    }
+
     public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable, HttpClient httpClient)
     {
         _logger = logger;
@@ -65,6 +72,7 @@ public class WifredClient
             }
 
             LastMessage = DateTime.Now;
+            NotifyClientChanged();
         }
     }
 
@@ -88,6 +96,7 @@ public class WifredClient
         
         _customTcpClient = client;
         ConnectedAt = DateTime.Now;
+        NotifyClientChanged();
     }
 
     private async Task UpdateBatteryVoltageAsync()
@@ -112,6 +121,7 @@ public class WifredClient
             {
                 BatteryVoltage = config.BatteryVoltage.Value;
                 _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV", Id, BatteryVoltage);
+                NotifyClientChanged();
             }
         }
         catch (Exception ex)
@@ -127,6 +137,7 @@ public class WifredClient
         ConnectedAt = null;
         _customTcpClient?.Dispose();
         _customTcpClient = null!;
+        NotifyClientChanged();
     }
 
     #region MultiThrottle
@@ -238,6 +249,7 @@ public class WifredClient
                 row.Deactivate();
             });
         }
+        NotifyClientChanged();
     }
 
     private async Task MtAddAsync(char mtIdentifier, IAddress? address)
@@ -274,6 +286,7 @@ public class WifredClient
                 await _customTcpClient?.SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}")!;
                 await _customTcpClient?.SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}")!;
                 //TODO forward functions
+                NotifyClientChanged();
                 return; // finished for now
 
             case OccupySlotResult.Occupied:

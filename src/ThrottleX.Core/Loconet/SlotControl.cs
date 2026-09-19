@@ -1,8 +1,8 @@
-﻿using Loconet;
-using Loconet.Msg;
-using Loconet.Msg.Accessor;
-using Shared.LocoTable;
-using Shared.Models;
+using global::Loconet;
+using global::Loconet.Msg;
+using global::Loconet.Msg.Accessor;
+using global::Shared.LocoTable;
+using global::Shared.Models;
 using static ThrottleX.Core.Loconet.SlotControl;
 
 namespace ThrottleX.Core.Loconet;

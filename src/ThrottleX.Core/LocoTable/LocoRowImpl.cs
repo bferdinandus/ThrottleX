@@ -1,7 +1,7 @@
-﻿using Loconet;
+using global::Loconet;
 using Microsoft.Extensions.Logging;
-using Shared.LocoTable;
-using Shared.Models;
+using global::Shared.LocoTable;
+using global::Shared.Models;
 using System.Collections.Concurrent;
 using ThrottleX.Core.Loconet;
 

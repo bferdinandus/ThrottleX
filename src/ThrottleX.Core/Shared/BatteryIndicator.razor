@@ -1,0 +1,71 @@
+<div class="d-inline-flex align-items-center gap-2 battery-indicator" title="@TooltipText">
+    @if (Millivolts <= 0)
+    {
+        <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="currentColor" class="bi bi-battery me-1" viewBox="0 0 16 16">
+                <path d="M0 6a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v4a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V6zm2-1a1 1 0 0 0-1 1v4a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6a1 1 0 0 0-1-1H2zm14 3a1.5 1.5 0 0 1-1.5 1.33v-2.66C15.5 6.67 16 7.23 16 8z"/>
+            </svg>
+            N/A
+        </span>
+    }
+    else
+    {
+        <div class="battery-shell @BadgeClass border rounded px-2 py-1 d-inline-flex align-items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi @BatteryIconClass" viewBox="0 0 16 16">
+                @if (Percentage >= 80)
+                {
+                    <path d="M2 6h10v4H2V6z"/>
+                    <path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm10 1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h10zm4 3a1.5 1.5 0 0 1-1.5 1.33v-2.66C15.5 6.67 16 7.23 16 8z"/>
+                }
+                else if (Percentage >= 40)
+                {
+                    <path d="M2 6h5v4H2V6z"/>
+                    <path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm10 1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h10zm4 3a1.5 1.5 0 0 1-1.5 1.33v-2.66C15.5 6.67 16 7.23 16 8z"/>
+                }
+                else
+                {
+                    <path d="M2 6h2v4H2V6z"/>
+                    <path d="M2 4a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2H2zm10 1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1H2a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h10zm4 3a1.5 1.5 0 0 1-1.5 1.33v-2.66C15.5 6.67 16 7.23 16 8z"/>
+                }
+            </svg>
+            <span class="fw-semibold">@VoltageString V</span>
+            <small class="text-body-secondary">(@Percentage%)</small>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public int Millivolts { get; set; }
+
+    private double Volts => Millivolts / 1000.0;
+    private string VoltageString => Volts.ToString("0.00");
+
+    private int Percentage
+    {
+        get
+        {
+            if (Millivolts <= 0) return 0;
+            // Approximate Li-Ion 3.2V (0%) to 4.2V (100%)
+            var pct = (int)Math.Round((Volts - 3.2) / (4.2 - 3.2) * 100);
+            return Math.Clamp(pct, 0, 100);
+        }
+    }
+
+    private string BatteryIconClass => Percentage switch
+    {
+        >= 80 => "bi-battery-full text-success",
+        >= 40 => "bi-battery-half text-warning",
+        >= 15 => "bi-battery text-danger",
+        _ => "bi-battery text-danger"
+    };
+
+    private string BadgeClass => Percentage switch
+    {
+        >= 60 => "bg-success-subtle text-success-emphasis border-success-subtle",
+        >= 30 => "bg-warning-subtle text-warning-emphasis border-warning-subtle",
+        _ => "bg-danger-subtle text-danger-emphasis border-danger-subtle"
+    };
+
+    private string TooltipText => Millivolts > 0 ? $"{VoltageString} V ({Millivolts} mV) - ~{Percentage}%" : "Battery voltage unknown";
+}

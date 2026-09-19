@@ -1,4 +1,4 @@
-﻿using Shared.LocoTable;
+using global::Shared.LocoTable;
 
 namespace ThrottleX.Core.LocoTable;
 

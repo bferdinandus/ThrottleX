@@ -1,0 +1,234 @@
+@page "/"
+@inject WifredClientStore ClientStore
+@inject LoconetService LoconetService
+@implements IDisposable
+
+<PageTitle>ThrottleX - Dashboard</PageTitle>
+
+<div class="row g-3 mb-4">
+    <!-- Stat 1: WiFred Clients -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                    <span class="text-body-secondary small fw-medium text-uppercase tracking-wider">WiFred Clients</span>
+                    <h2 class="mb-0 fw-bold mt-1">@OnlineClientsCount <span class="fs-6 text-body-secondary fw-normal">/ @TotalClientsCount</span></h2>
+                    <div class="small mt-1 text-success d-flex align-items-center gap-1">
+                        <span class="status-dot status-dot-success"></span>
+                        @OnlineClientsCount Online
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper bg-primary-subtle text-primary rounded-3 p-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-broadcast-pin" viewBox="0 0 16 16">
+                        <path d="M3.05 3.05a7 7 0 0 0 0 9.9.5.5 0 0 1-.707.707 8 8 0 0 1 0-11.314.5.5 0 0 1 .707.707zm2.122 2.122a4 4 0 0 0 0 5.656.5.5 0 1 1-.708.708 5 5 0 0 1 0-7.072.5.5 0 0 1 .708.708zm5.656-.708a.5.5 0 0 1 .708 0 5 5 0 0 1 0 7.072.5.5 0 1 1-.708-.708 4 4 0 0 0 0-5.656.5.5 0 0 1 0-.708zm2.122-2.12a.5.5 0 0 1 .707 0 8 8 0 0 1 0 11.313.5.5 0 0 1-.707-.707 7 7 0 0 0 0-9.9.5.5 0 0 1 0-.707zM10 8a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+                        <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v7a.5.5 0 0 1-1 0v-7h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 2: Controlled Locos -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                    <span class="text-body-secondary small fw-medium text-uppercase tracking-wider">Active Locomotives</span>
+                    <h2 class="mb-0 fw-bold mt-1">@ActiveLocosCount</h2>
+                    <div class="small mt-1 text-body-secondary">
+                        Under active throttle control
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper bg-info-subtle text-info rounded-3 p-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-train-front-fill" viewBox="0 0 16 16">
+                        <path d="M5.621 1.485c1.86-.454 2.898-.454 4.758 0 .529.13 1.002.404 1.365.819L13.1 3.8a1.5 1.5 0 0 1 .4.9v5.8a2.5 2.5 0 0 1-2.5 2.5h-6A2.5 2.5 0 0 1 2.5 10.5V4.7a1.5 1.5 0 0 1 .4-.9l1.356-1.496c.363-.415.836-.689 1.365-.819ZM3.5 6.5v4A1.5 1.5 0 0 0 5 12h6a1.5 1.5 0 0 0 1.5-1.5v-4H3.5ZM12 4.207 10.957 3.06A.5.5 0 0 0 10.58 2.9c-1.637-.4-2.523-.4-4.16 0a.5.5 0 0 0-.377.16L4.957 4.207a.5.5 0 0 0-.157.363V5.5h6.4v-.93a.5.5 0 0 0-.157-.363ZM4 8.5a.5.5 0 0 1 .5-.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-.5-.5Zm6.5-.5a.5.5 0 0 0 0 1h1a.5.5 0 0 0 0-1h-1Z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 3: LocoNet Status -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                    <span class="text-body-secondary small fw-medium text-uppercase tracking-wider">LocoNet Over TCP</span>
+                    <h2 class="mb-0 fw-bold mt-1">@OperationalLoconetCount <span class="fs-6 text-body-secondary fw-normal">/ @TotalLoconetCount</span></h2>
+                    <div class="small mt-1 d-flex align-items-center gap-1 @(OperationalLoconetCount > 0 ? "text-success" : "text-warning")">
+                        <span class="status-dot @(OperationalLoconetCount > 0 ? "status-dot-success" : "status-dot-warning")"></span>
+                        @(OperationalLoconetCount > 0 ? "Connected & Ready" : "Disconnected / Retrying")
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper bg-success-subtle text-success rounded-3 p-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-hdd-network-fill" viewBox="0 0 16 16">
+                        <path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H5a.5.5 0 0 0 0 1h1.5V14h-1a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-1v-1.5H11a.5.5 0 0 0 0-1h-1A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stat 4: System Health -->
+    <div class="col-12 col-sm-6 col-xl-3">
+        <div class="card stat-card border-0 shadow-sm h-100">
+            <div class="card-body d-flex align-items-center justify-content-between p-3">
+                <div>
+                    <span class="text-body-secondary small fw-medium text-uppercase tracking-wider">Gateway Status</span>
+                    <h2 class="mb-0 fw-bold mt-1 text-success">Active</h2>
+                    <div class="small mt-1 text-body-secondary">
+                        Real-time push enabled
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper bg-secondary-subtle text-secondary rounded-3 p-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" class="bi bi-shield-check" viewBox="0 0 16 16">
+                        <path d="M5.338 1.59a61.44 61.44 0 0 0-2.837.856.481.481 0 0 0-.328.39c-.554 4.157.726 7.19 2.253 9.188a10.725 10.725 0 0 0 2.287 2.233c.346.244.652.42.893.533.12.057.218.095.293.118a.55.55 0 0 0 .101.025.615.615 0 0 0 .1-.025c.076-.023.174-.061.294-.118.24-.113.547-.29.893-.533a10.726 10.726 0 0 0 2.287-2.233c1.527-1.997 2.807-5.031 2.253-9.188a.48.48 0 0 0-.328-.39c-.651-.213-1.75-.56-2.837-.855C9.552 1.29 8.531 1.067 8 1.067c-.53 0-1.552.223-2.662.524zM5.072.56C6.157.265 7.31 0 8 0s1.843.265 2.928.56c1.11.3 2.229.655 2.887.87a1.54 1.54 0 0 1 1.044 1.262c.596 4.477-.787 7.795-2.465 9.99a11.775 11.775 0 0 1-2.517 2.453 7.159 7.159 0 0 1-1.048.625c-.28.132-.581.24-.829.24s-.548-.108-.829-.24a7.158 7.158 0 0 1-1.048-.625 11.777 11.777 0 0 1-2.517-2.453C1.928 10.487.545 7.169 1.141 2.692A1.54 1.54 0 0 1 2.185 1.43 62.456 62.456 0 0 1 5.072.56z"/>
+                        <path d="M10.854 5.146a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0l-1.5-1.5a.5.5 0 1 1 .708-.708L7.5 7.793l2.646-2.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <!-- Quick WiFred Clients Summary -->
+    <div class="col-12 col-lg-7">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="p-2 bg-primary-subtle text-primary rounded-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-broadcast" viewBox="0 0 16 16">
+                            <path d="M3.05 3.05a7 7 0 0 0 0 9.9.5.5 0 0 1-.707.707 8 8 0 0 1 0-11.314.5.5 0 0 1 .707.707zm2.122 2.122a4 4 0 0 0 0 5.656.5.5 0 1 1-.708.708 5 5 0 0 1 0-7.072.5.5 0 0 1 .708.708zm5.656-.708a.5.5 0 0 1 .708 0 5 5 0 0 1 0 7.072.5.5 0 1 1-.708-.708 4 4 0 0 0 0-5.656.5.5 0 0 1 0-.708zm2.122-2.12a.5.5 0 0 1 .707 0 8 8 0 0 1 0 11.313.5.5 0 0 1-.707-.707 7 7 0 0 0 0-9.9.5.5 0 0 1 0-.707zM6 8a2 2 0 1 1 2.5 1.937A1.5 1.5 0 0 1 8 11.5v1.75a.75.75 0 0 1-1.5 0V11.5A1.5 1.5 0 0 1 6 10a2 2 0 0 1 0-2z"/>
+                        </svg>
+                    </span>
+                    <h5 class="card-title mb-0 fw-semibold">WiFred Throttles</h5>
+                </div>
+                <a href="wifred-clients" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!Clients.Any())
+                {
+                    <div class="text-center py-5 text-body-secondary">
+                        <p class="mb-0">No WiFred clients registered yet.</p>
+                        <small>Throttles will appear here automatically when connected.</small>
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var client in Clients.Take(5))
+                        {
+                            <div class="list-group-item d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center p-3 gap-2">
+                                <div>
+                                    <div class="d-flex align-items-center gap-2">
+                                        <h6 class="mb-0 fw-bold">@client.Name</h6>
+                                        <StatusBadge IsActive="@client.IsConnected" Text="@(client.IsConnected ? "Online" : "Offline")" />
+                                    </div>
+                                    <div class="small text-body-secondary mt-1 d-flex flex-wrap gap-2 align-items-center">
+                                        <span>UID: <code>@client.Id</code></span>
+                                        @if (!string.IsNullOrEmpty(client.GetIpAddress()))
+                                        {
+                                            <span>&bull;</span>
+                                            <span>IP: @client.GetIpAddress()</span>
+                                        }
+                                        @if (!string.IsNullOrEmpty(client.GetLocoAdresses()))
+                                        {
+                                            <span>&bull;</span>
+                                            <span class="badge bg-primary-subtle text-primary-emphasis">Locos: @client.GetLocoAdresses()</span>
+                                        }
+                                    </div>
+                                </div>
+                                <div>
+                                    <BatteryIndicator Millivolts="@client.BatteryVoltage" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <!-- LocoNet Links Summary -->
+    <div class="col-12 col-lg-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-transparent border-bottom py-3 d-flex justify-content-between align-items-center">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="p-2 bg-success-subtle text-success rounded-2">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-hdd-network" viewBox="0 0 16 16">
+                            <path d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
+                            <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H8.5v3a1.5 1.5 0 0 1 1.5 1.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-1-.5V11h-2v1.5a.5.5 0 0 1-1 .5h-1a.5.5 0 0 1 0-1h1A1.5 1.5 0 0 1 7.5 10V7H2a2 2 0 0 1-2-2V4zm1 0v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1zm6 7.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-1 0z"/>
+                        </svg>
+                    </span>
+                    <h5 class="card-title mb-0 fw-semibold">LocoNet Connections</h5>
+                </div>
+                <a href="loconet-connections" class="btn btn-sm btn-outline-primary">View All</a>
+            </div>
+            <div class="card-body p-0">
+                @if (!LoconetService.Clients.Any())
+                {
+                    <div class="text-center py-5 text-body-secondary">
+                        <p class="mb-0">No LocoNet endpoints configured.</p>
+                    </div>
+                }
+                else
+                {
+                    <div class="list-group list-group-flush">
+                        @foreach (var (client, send) in LoconetService.Clients)
+                        {
+                            <div class="list-group-item p-3">
+                                <div class="d-flex justify-content-between align-items-center mb-1">
+                                    <div class="fw-bold">@client.PeerName</div>
+                                    <StatusBadge IsActive="@client.IsOperational" Text="@client.State.ToString()" />
+                                </div>
+                                <div class="small text-body-secondary d-flex flex-column gap-1 mt-2">
+                                    <div><strong>Send Thread:</strong> @send.State</div>
+                                    @if (send.GuessedCommandStation != null)
+                                    {
+                                        <div><strong>Command Station:</strong> <span class="badge bg-secondary-subtle text-secondary-emphasis">@send.GuessedCommandStation</span></div>
+                                    }
+                                    @if (!string.IsNullOrEmpty(client.ServerVersionInfo))
+                                    {
+                                        <div><strong>Server:</strong> @client.ServerVersionInfo</div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private IEnumerable<WifredClient> Clients => ClientStore.GetAllClients();
+    private int OnlineClientsCount => Clients.Count(c => c.IsConnected);
+    private int TotalClientsCount => Clients.Count();
+    private int ActiveLocosCount => Clients.Where(c => c.IsConnected && !string.IsNullOrEmpty(c.GetLocoAdresses())).Count();
+    private int OperationalLoconetCount => LoconetService.Clients.Count(c => c.client.IsOperational);
+    private int TotalLoconetCount => LoconetService.Clients.Count();
+
+    protected override void OnInitialized()
+    {
+        ClientStore.OnStoreChanged += HandleStoreChanged;
+        LoconetService.OnConnectionsChanged += HandleConnectionsChanged;
+    }
+
+    private void HandleStoreChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    private void HandleConnectionsChanged()
+    {
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        ClientStore.OnStoreChanged -= HandleStoreChanged;
+        LoconetService.OnConnectionsChanged -= HandleConnectionsChanged;
+    }
+}
