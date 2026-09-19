@@ -30,7 +30,6 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
-          global-json-file: 'global.json'
 
       - name: Run Tests
         run: dotnet test --configuration Release
@@ -58,11 +57,11 @@ jobs:
           echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ steps.build_package.outputs.release_tag }}
-          name: Release ${{ steps.build_package.outputs.release_tag }}
-          files: ${{ steps.build_package.outputs.deb_file }}
-          generate_release_notes: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          RELEASE_TAG="${{ steps.build_package.outputs.release_tag }}"
+          DEB_FILE="${{ steps.build_package.outputs.deb_file }}"
+          gh release create "${RELEASE_TAG}" "${DEB_FILE}" \
+            --title "Release ${RELEASE_TAG}" \
+            --generate-notes
