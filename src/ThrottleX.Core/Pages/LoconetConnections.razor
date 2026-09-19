@@ -19,7 +19,7 @@
     </div>
 
     <div class="d-flex align-items-center gap-2">
-        <span class="badge bg-body-tertiary text-body border px-3 py-2">
+        <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle px-3 py-2">
             <strong>@OperationalCount</strong> / <strong>@TotalCount</strong> Operational
         </span>
     </div>
@@ -118,7 +118,7 @@ else
                                 <span class="fw-bold">@client.PeerName</span>
                             </td>
                             <td>
-                                <span class="badge bg-body-secondary text-body">@client.State</span>
+                                <span class="badge bg-secondary-subtle text-secondary-emphasis border border-secondary-subtle">@client.State</span>
                             </td>
                             <td>
                                 <span class="badge @(send.State == LoconetSend.EState.NormalOperation ? "bg-success-subtle text-success-emphasis" : "bg-warning-subtle text-warning-emphasis")">

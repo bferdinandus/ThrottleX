@@ -8,18 +8,52 @@
   --tx-font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
+/* ==========================================================================
+   Dark Theme Definition
+   ========================================================================== */
 [data-bs-theme="dark"] {
-  --bs-body-bg: #0f172a;
-  --bs-body-color: #f1f5f9;
-  --bs-tertiary-bg: #1e293b;
+  --bs-body-bg: #0b0f19;
+  --bs-body-color: #f8fafc;
+  --bs-tertiary-bg: #151e2e;
   --bs-secondary-bg: #1e293b;
-  --bs-border-color: #334155;
-  --bs-border-color-translucent: rgba(255, 255, 255, 0.12);
-  --tx-card-bg: #1e293b;
-  --tx-card-border: #334155;
-  --tx-stat-bg: #1e293b;
+  --bs-border-color: #263347;
+  --bs-border-color-translucent: rgba(255, 255, 255, 0.1);
+  
+  --tx-card-bg: #151e2e;
+  --tx-card-border: #263347;
+  --tx-stat-bg: #151e2e;
+  --tx-input-bg: #0b0f19;
+  --tx-muted-color: #94a3b8;
+  --tx-secondary-color: #cbd5e1;
+  
+  --bs-primary-subtle-bg: rgba(59, 130, 246, 0.18);
+  --bs-primary-subtle-border: rgba(59, 130, 246, 0.35);
+  --bs-primary-emphasis-color: #93c5fd;
+  
+  --bs-success-subtle-bg: rgba(16, 185, 129, 0.18);
+  --bs-success-subtle-border: rgba(16, 185, 129, 0.35);
+  --bs-success-emphasis-color: #6ee7b7;
+  
+  --bs-warning-subtle-bg: rgba(245, 158, 11, 0.18);
+  --bs-warning-subtle-border: rgba(245, 158, 11, 0.35);
+  --bs-warning-emphasis-color: #fde68a;
+  
+  --bs-danger-subtle-bg: rgba(239, 68, 68, 0.18);
+  --bs-danger-subtle-border: rgba(239, 68, 68, 0.35);
+  --bs-danger-emphasis-color: #fca5a5;
+  
+  --bs-info-subtle-bg: rgba(6, 182, 212, 0.18);
+  --bs-info-subtle-border: rgba(6, 182, 212, 0.35);
+  --bs-info-emphasis-color: #67e8f9;
+  
+  --bs-secondary-subtle-bg: rgba(148, 163, 184, 0.15);
+  --bs-secondary-subtle-border: rgba(148, 163, 184, 0.3);
+  --bs-secondary-emphasis-color: #cbd5e1;
 }
 
+/* ==========================================================================
+   Light Theme Definition
+   ========================================================================== */
 [data-bs-theme="light"] {
   --bs-body-bg: #f8fafc;
   --bs-body-color: #0f172a;
@@ -27,29 +61,96 @@
   --bs-secondary-bg: #e2e8f0;
   --bs-border-color: #e2e8f0;
   --bs-border-color-translucent: rgba(0, 0, 0, 0.08);
+  
   --tx-card-bg: #ffffff;
   --tx-card-border: #e2e8f0;
   --tx-stat-bg: #ffffff;
+  --tx-input-bg: #ffffff;
+  --tx-muted-color: #64748b;
+  --tx-secondary-color: #475569;
+  
+  --bs-primary-subtle-bg: #eff6ff;
+  --bs-primary-subtle-border: #bfdbfe;
+  --bs-primary-emphasis-color: #1d4ed8;
+  
+  --bs-success-subtle-bg: #ecfdf5;
+  --bs-success-subtle-border: #a7f3d0;
+  --bs-success-emphasis-color: #047857;
+  
+  --bs-warning-subtle-bg: #fffbeb;
+  --bs-warning-subtle-border: #fde68a;
+  --bs-warning-emphasis-color: #b45309;
+  
+  --bs-danger-subtle-bg: #fef2f2;
+  --bs-danger-subtle-border: #fecaca;
+  --bs-danger-emphasis-color: #b91c1c;
+  
+  --bs-info-subtle-bg: #ecfeff;
+  --bs-info-subtle-border: #a5f3fc;
+  --bs-info-emphasis-color: #0e7490;
+  
+  --bs-secondary-subtle-bg: #f1f5f9;
+  --bs-secondary-subtle-border: #e2e8f0;
+  --bs-secondary-emphasis-color: #475569;
 }
 
+/* ==========================================================================
+   Base & Global Typography
+   ========================================================================== */
 html, body {
   font-family: var(--tx-font-family);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   min-height: 100%;
+  background-color: var(--bs-body-bg);
+  color: var(--bs-body-color);
 }
 
-.tracking-wider {
-  letter-spacing: 0.05em;
-}
+.tracking-wider { letter-spacing: 0.05em; }
+.tracking-tight { letter-spacing: -0.025em; }
 
-.tracking-tight {
-  letter-spacing: -0.025em;
-}
+/* Global background & text helpers */
+.bg-body { background-color: var(--bs-body-bg) !important; }
+.text-body { color: var(--bs-body-color) !important; }
 
-/* Card Enhancements */
+.bg-body-tertiary { background-color: var(--bs-tertiary-bg) !important; }
+.bg-body-secondary { background-color: var(--bs-secondary-bg) !important; }
+
+.text-body-secondary, .text-body-tertiary { color: var(--tx-muted-color) !important; }
+
+/* ==========================================================================
+   Subtle Badges & Status Indicators
+   ========================================================================== */
+.bg-primary-subtle { background-color: var(--bs-primary-subtle-bg) !important; }
+.text-primary-emphasis { color: var(--bs-primary-emphasis-color) !important; }
+.border-primary-subtle { border-color: var(--bs-primary-subtle-border) !important; }
+
+.bg-success-subtle { background-color: var(--bs-success-subtle-bg) !important; }
+.text-success-emphasis { color: var(--bs-success-emphasis-color) !important; }
+.border-success-subtle { border-color: var(--bs-success-subtle-border) !important; }
+
+.bg-warning-subtle { background-color: var(--bs-warning-subtle-bg) !important; }
+.text-warning-emphasis { color: var(--bs-warning-emphasis-color) !important; }
+.border-warning-subtle { border-color: var(--bs-warning-subtle-border) !important; }
+
+.bg-danger-subtle { background-color: var(--bs-danger-subtle-bg) !important; }
+.text-danger-emphasis { color: var(--bs-danger-emphasis-color) !important; }
+.border-danger-subtle { border-color: var(--bs-danger-subtle-border) !important; }
+
+.bg-info-subtle { background-color: var(--bs-info-subtle-bg) !important; }
+.text-info-emphasis { color: var(--bs-info-emphasis-color) !important; }
+.border-info-subtle { border-color: var(--bs-info-subtle-border) !important; }
+
+.bg-secondary-subtle { background-color: var(--bs-secondary-subtle-bg) !important; }
+.text-secondary-emphasis { color: var(--bs-secondary-emphasis-color) !important; }
+.border-secondary-subtle { border-color: var(--bs-secondary-subtle-border) !important; }
+
+/* ==========================================================================
+   Cards & List Groups
+   ========================================================================== */
 .card {
   background-color: var(--tx-card-bg);
+  color: var(--bs-body-color);
   border-color: var(--tx-card-border) !important;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
@@ -60,7 +161,7 @@ html, body {
 
 .stat-card:hover, .client-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.15), 0 4px 6px -4px rgba(0, 0, 0, 0.1) !important;
 }
 
 .stat-icon-wrapper {
@@ -69,7 +170,158 @@ html, body {
   justify-content: center;
 }
 
-/* Status Dots */
+.list-group-item {
+  background-color: var(--tx-card-bg) !important;
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.list-group-item:hover {
+  background-color: var(--bs-secondary-bg) !important;
+}
+
+/* ==========================================================================
+   Tables
+   ========================================================================== */
+.table {
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+  margin-bottom: 0;
+}
+
+.table > :not(caption) > * > * {
+  padding: 0.85rem 1rem;
+  background-color: transparent !important;
+  color: var(--bs-body-color) !important;
+  border-bottom-color: var(--bs-border-color) !important;
+}
+
+.table-hover > tbody > tr:hover > * {
+  background-color: var(--bs-secondary-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.table-light, thead.table-light {
+  background-color: var(--bs-tertiary-bg) !important;
+  color: var(--tx-muted-color) !important;
+}
+
+.table-light th, thead.table-light th {
+  background-color: var(--bs-tertiary-bg) !important;
+  color: var(--tx-muted-color) !important;
+  border-bottom-color: var(--bs-border-color) !important;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+/* ==========================================================================
+   Form Controls, Inputs, and Search
+   ========================================================================== */
+.form-control {
+  background-color: var(--tx-input-bg) !important;
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.form-control:focus {
+  background-color: var(--tx-input-bg) !important;
+  color: var(--bs-body-color) !important;
+  border-color: var(--tx-primary) !important;
+  box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25) !important;
+}
+
+.form-control::placeholder {
+  color: var(--tx-muted-color) !important;
+  opacity: 0.8;
+}
+
+.input-group-text {
+  background-color: var(--tx-input-bg) !important;
+  color: var(--tx-muted-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.search-input-group {
+  max-width: 300px;
+}
+
+@media (max-width: 576px) {
+  .search-input-group {
+    max-width: 100%;
+    width: 100%;
+  }
+}
+
+/* ==========================================================================
+   Dropdowns
+   ========================================================================== */
+.dropdown-menu {
+  background-color: var(--tx-card-bg) !important;
+  color: var(--bs-body-color) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.dropdown-item {
+  color: var(--bs-body-color) !important;
+  transition: background-color 0.15s ease-in-out;
+}
+
+.dropdown-item:hover, .dropdown-item:focus {
+  background-color: var(--bs-secondary-bg) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.dropdown-item.active, .dropdown-item:active {
+  background-color: var(--tx-primary) !important;
+  color: #ffffff !important;
+}
+
+/* ==========================================================================
+   Navigation & App Shell
+   ========================================================================== */
+.navbar {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+}
+
+.nav-link {
+  color: var(--bs-body-color) !important;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+}
+
+.nav-link:hover {
+  background-color: var(--bs-secondary-bg) !important;
+  color: var(--tx-primary) !important;
+}
+
+.nav-link.active {
+  background-color: var(--tx-primary) !important;
+  color: #ffffff !important;
+}
+
+.nav-link.active svg {
+  color: #ffffff !important;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+}
+
+[data-bs-theme="dark"] .navbar-toggler-icon {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.footer {
+  background-color: var(--bs-tertiary-bg) !important;
+  border-color: var(--bs-border-color) !important;
+  color: var(--tx-muted-color) !important;
+}
+
+/* ==========================================================================
+   Status Dots & Animations
+   ========================================================================== */
 .status-dot {
   width: 8px;
   height: 8px;
@@ -126,55 +378,23 @@ html, body {
   background-color: var(--bs-secondary-bg);
   border: 1px solid var(--bs-border-color);
   font-weight: 500;
+  color: var(--bs-body-color);
 }
 
-/* Battery Indicator */
+/* ==========================================================================
+   Code & Telemetry Formatting
+   ========================================================================== */
+code {
+  color: var(--bs-primary-emphasis-color);
+  background-color: var(--bs-secondary-bg);
+  padding: 0.15rem 0.4rem;
+  border-radius: 0.25rem;
+  font-size: 0.875em;
+}
+
 .battery-shell {
   font-size: 0.8125rem;
   line-height: 1.2;
-}
-
-/* Search input */
-.search-input-group {
-  max-width: 300px;
-}
-
-@media (max-width: 576px) {
-  .search-input-group {
-    max-width: 100%;
-    width: 100%;
-  }
-}
-
-/* Nav Link active style */
-.nav-link {
-  color: var(--bs-body-color);
-  font-weight: 500;
-  transition: all 0.15s ease-in-out;
-}
-
-.nav-link:hover {
-  background-color: var(--bs-secondary-bg);
-  color: var(--bs-primary);
-}
-
-.nav-link.active {
-  background-color: var(--bs-primary) !important;
-  color: #ffffff !important;
-}
-
-.nav-link.active svg {
-  color: #ffffff !important;
-}
-
-.brand-icon {
-  width: 36px;
-  height: 36px;
-}
-
-/* Tables */
-.table > :not(caption) > * > * {
-  padding: 0.85rem 1rem;
 }
 
 /* Blazor reconnect / error UI */
