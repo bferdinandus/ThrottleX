@@ -46,8 +46,8 @@
         get
         {
             if (Millivolts <= 0) return 0;
-            // Approximate Li-Ion 3.2V (0%) to 4.2V (100%)
-            var pct = (int)Math.Round((Volts - 3.2) / (4.2 - 3.2) * 100);
+            // Approximate Li-Ion 3450mV (0%) to 4.2V (100%)
+            var pct = (int)Math.Round((Volts - 3.45) / (4.2 - 3.45) * 100);
             return Math.Clamp(pct, 0, 100);
         }
     }

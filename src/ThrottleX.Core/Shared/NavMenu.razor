@@ -14,7 +14,7 @@
             <span class="fs-4 tracking-tight">Throttle<span class="text-primary">X</span></span>
         </a>
 
-        <button class="navbar-toggler border-0 shadow-none" type="button" @onclick="ToggleNavMenu" aria-controls="navbarSupportedContent" aria-expanded="@(!_collapseNavMenu)" aria-label="Toggle navigation">
+        <button class="navbar-toggler p-2 border rounded-3 shadow-none" type="button" @onclick="ToggleNavMenu" aria-controls="navbarSupportedContent" aria-expanded="@(!_collapseNavMenu)" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -56,17 +56,7 @@
                 </li>
             </ul>
 
-            <div class="d-flex align-items-center gap-3 pt-3 pt-lg-0 border-top border-lg-0 mt-3 mt-lg-0">
-                <div class="d-flex align-items-center gap-2 text-body-secondary small d-none d-xl-flex">
-                    <span class="status-indicator-badge">
-                        <span class="status-dot @(OperationalLoconetCount > 0 ? "status-dot-success" : "status-dot-warning")"></span>
-                        LocoNet: @(OperationalLoconetCount > 0 ? "Active" : "Connecting")
-                    </span>
-                    <span class="status-indicator-badge">
-                        <span class="status-dot @(OnlineClientsCount > 0 ? "status-dot-success" : "status-dot-secondary")"></span>
-                        WiFred: @OnlineClientsCount Active
-                    </span>
-                </div>
+            <div class="d-flex align-items-center gap-3 pt-3 pt-lg-0 mt-3 mt-lg-0">
                 <ThemeToggle />
             </div>
         </div>

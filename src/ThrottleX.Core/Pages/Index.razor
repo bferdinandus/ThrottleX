@@ -203,10 +203,10 @@
 </div>
 
 @code {
-    private IEnumerable<WifredClient> Clients => ClientStore.GetAllClients();
+    private IEnumerable<WifredClient> Clients => ClientStore.GetAllClients().OrderByDescending(c => c.ConnectedAt);
     private int OnlineClientsCount => Clients.Count(c => c.IsConnected);
     private int TotalClientsCount => Clients.Count();
-    private int ActiveLocosCount => Clients.Where(c => c.IsConnected && !string.IsNullOrEmpty(c.GetLocoAdresses())).Count();
+    private int ActiveLocosCount => Clients.Count(c => c.IsConnected && !string.IsNullOrEmpty(c.GetLocoAdresses()));
     private int OperationalLoconetCount => LoconetService.Clients.Count(c => c.client.IsOperational);
     private int TotalLoconetCount => LoconetService.Clients.Count();
 
