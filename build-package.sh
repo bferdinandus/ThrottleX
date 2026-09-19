@@ -91,11 +91,12 @@ render_template "service.tpl" "${SYSTEMD_DIR}/${EXECUTABLE}.service"
 dotnet publish ./src/ThrottleX.Core/ThrottleX.Core.csproj -c Release -r linux-arm64 --self-contained -p:PublishSingleFile=true
 
 # Copy the built files to the package structure inside the subfolder
-cp -r ./src/ThrottleX.Core/bin/Release/net8.0/linux-arm64/publish/* "${SHARE_DIR}/"
+cp -r ./src/ThrottleX.Core/bin/Release/net10.0/linux-arm64/publish/* "${SHARE_DIR}/"
 
 # Build the .deb package with gzip compression
 dpkg-deb -Zgzip --build "${PKG_DIR}"
 
-mv ${PKG_DIR}.deb ${PKG_DIR}-${VERSION}.deb
+PACKAGE_FILE="${PKG_DIR}-${VERSION}-${ARCHITECTURE}.deb"
+mv "${PKG_DIR}.deb" "${PACKAGE_FILE}"
 
-echo "Package ${PKG_DIR}-${VERSION}.deb has been created."
+echo "Package ${PACKAGE_FILE} has been created."
