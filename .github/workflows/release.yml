@@ -4,7 +4,7 @@ on:
   push:
     tags:
       - 'v*'
-      - '[0-9]+.[0-9]+*'
+      - '[0-9]*'
   workflow_dispatch:
     inputs:
       version:
@@ -55,6 +55,32 @@ jobs:
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "deb_file=${DEB_FILE}" >> "$GITHUB_OUTPUT"
           echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Update version.txt in repository
+        run: |
+          VERSION="${{ steps.build_package.outputs.version }}"
+          if [ "${{ github.ref_type }}" = "branch" ]; then
+            TARGET_BRANCH="${{ github.ref_name }}"
+          else
+            TARGET_BRANCH="${{ github.event.repository.default_branch }}"
+          fi
+          if [ -z "$TARGET_BRANCH" ]; then
+            TARGET_BRANCH="develop"
+          fi
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          
+          git fetch origin "${TARGET_BRANCH}"
+          git checkout -B "${TARGET_BRANCH}" "origin/${TARGET_BRANCH}"
+          
+          echo "${VERSION}" > version.txt
+          
+          if ! git diff --quiet version.txt; then
+            git add version.txt
+            git commit -m "Update version.txt to ${VERSION} [skip ci]"
+            git push origin "${TARGET_BRANCH}"
+          fi
 
       - name: Publish GitHub Release
         env:
