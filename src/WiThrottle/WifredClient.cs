@@ -20,6 +20,7 @@ public class WifredClient
 
     public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
+    public int GetLocoCount() => _myLocos.Count;
 
     private CustomTcpClient? _customTcpClient;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
