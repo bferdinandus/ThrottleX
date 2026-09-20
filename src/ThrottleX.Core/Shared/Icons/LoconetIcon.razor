@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="@Size" height="@Size" fill="currentColor" class="bi bi-hdd-network"
+     viewBox="0 0 16 16">
+    @if (Style == LoconetIconStyle.Open)
+    {
+        <path d="M4.5 5a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1zM3 4.5a.5.5 0 1 1-1 0 .5.5 0 0 1 1 0z"/>
+        <path d="M0 4a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H8.5v3a1.5 1.5 0 0 1 1.5 1.5h1a.5.5 0 0 1 0 1h-1a.5.5 0 0 1-1-.5V11h-2v1.5a.5.5 0 0 1-1 .5h-1a.5.5 0 0 1 0-1h1A1.5 1.5 0 0 1 7.5 10V7H2a2 2 0 0 1-2-2V4zm1 0v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V4a1 1 0 0 0-1-1H2a1 1 0 0 0-1 1zm6 7.5v1a.5.5 0 0 0 1 0v-1a.5.5 0 0 0-1 0z"/>
+    }
+    @if (Style == LoconetIconStyle.Filled)
+    {
+        <path d="M2 2a2 2 0 0 0-2 2v1a2 2 0 0 0 2 2h5.5v3A1.5 1.5 0 0 0 6 11.5H5a.5.5 0 0 0 0 1h1.5V14h-1a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1h-1v-1.5H11a.5.5 0 0 0 0-1h-1A1.5 1.5 0 0 0 8.5 10V7H14a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H2zm.5 3a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1zm2 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1z"/>
+    }
+</svg>
+
+@code {
+    [Parameter] public int Size { get; set; }
+
+    [Parameter] public LoconetIconStyle Style { get; set; } = LoconetIconStyle.Open;
+
+    public enum LoconetIconStyle
+    {
+        Open,
+        Filled
+    }
+
+}

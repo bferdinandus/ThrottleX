@@ -1,4 +1,6 @@
 ﻿using System.Net.Sockets;
+using System.Security;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.LocoTable;
@@ -7,7 +9,7 @@ using WiThrottle.Models.WiFred;
 
 namespace WiThrottle;
 
-public class WifredClient
+public partial class WifredClient
 {
     private readonly ILogger _logger;
     public string Id { get; private set; }
@@ -49,7 +51,7 @@ public class WifredClient
     {
         await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
-        
+
         _ = BatteryVoltageLoopAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested && IsConnected)
@@ -94,7 +96,7 @@ public class WifredClient
         if (IsConnected) Disconnect();
 
         _myLocos.Clear();
-        
+
         _customTcpClient = client;
         ConnectedAt = DateTime.Now;
         NotifyClientChanged();
@@ -103,21 +105,17 @@ public class WifredClient
     private async Task UpdateBatteryVoltageAsync()
     {
         var url = new Uri($"http://{GetIpAddress()}/api/getConfigXML");
-    
+
         try
         {
             var xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
-            
-            if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
-            {
-                xmlContent = "<?xml" + xmlContent.Substring(5);
-            }
-        
+            xmlContent = NormalizeXmlContent(xmlContent);
+
             var serializer = new System.Xml.Serialization.XmlSerializer(typeof(WiFredConfig));
             using var stringReader = new StringReader(xmlContent);
-        
+
             var config = (WiFredConfig?)serializer.Deserialize(stringReader);
-        
+
             if (config != null)
             {
                 BatteryVoltage = config.BatteryVoltage.Value;
@@ -129,6 +127,20 @@ public class WifredClient
         {
             _logger.LogWarning(ex, "[{uid}] Failed to update battery voltage from {Url}", Id, url);
         }
+    }
+
+    [GeneratedRegex("""(<Key\b[^>]*?\bvalue\s*=\s*")([^"]*)(")""", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    private static partial Regex KeyAttributeRegex();
+
+    private static string NormalizeXmlContent(string xmlContent)
+    {
+        if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
+        {
+            xmlContent = string.Concat("<?xml", xmlContent.AsSpan(5));
+        }
+
+        // Escape raw '<' characters only inside <Key value="...">.
+        return KeyAttributeRegex().Replace( xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
     }
 
     public void Disconnect()
@@ -250,6 +262,7 @@ public class WifredClient
                 row.Deactivate();
             });
         }
+
         NotifyClientChanged();
     }
 
