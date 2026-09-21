@@ -140,7 +140,9 @@ public partial class WifredClient
         }
 
         // Escape raw '<' characters only inside <Key value="...">.
-        return KeyAttributeRegex().Replace( xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
+        xmlContent = KeyAttributeRegex().Replace( xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
+
+        return xmlContent;
     }
 
     public void Disconnect()
