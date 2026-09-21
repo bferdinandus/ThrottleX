@@ -1,5 +1,5 @@
 using Serilog;
-using global::Shared.LocoTable;
+using Shared.LocoTable;
 using ThrottleX.Core.Loconet;
 using ThrottleX.Core.LocoTable;
 using WiThrottle;

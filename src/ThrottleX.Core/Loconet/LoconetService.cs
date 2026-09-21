@@ -1,7 +1,7 @@
-using global::Loconet;
+using Loconet;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
-using global::Shared.LocoTable;
+using Shared.LocoTable;
 using ThrottleX.Core.LocoTable;
 
 namespace ThrottleX.Core.Loconet;

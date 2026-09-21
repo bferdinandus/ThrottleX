@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Logging;
-using global::Shared.LocoTable;
-using global::Shared.Models;
+using Shared.LocoTable;
+using Shared.Models;
 using System.Collections;
 
 namespace ThrottleX.Core.LocoTable;
