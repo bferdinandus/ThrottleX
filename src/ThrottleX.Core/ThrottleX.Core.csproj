@@ -20,6 +20,10 @@
 
   <ItemGroup>
     <Content Remove="appsettings.*.json"/>
+    <Content Include="..\..\version.txt">
+      <Link>version.txt</Link>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Content Include="appsettings.*.json">
       <CopyToOutputDirectory>Never</CopyToOutputDirectory>
     </Content>

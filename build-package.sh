@@ -24,26 +24,23 @@ for f in control.tpl preinst.tpl postinst.tpl service.tpl; do
   fi
 done
 
-# Determine version: prioritize CLI argument or env var, otherwise auto-increment from file
+# Determine version: prioritize CLI argument (e.g. from GitHub Actions tag), otherwise auto-increment from file
 if [ -n "$1" ]; then
     VERSION="${1#v}"
-    echo "${VERSION}" > "${VERSION_FILE}"
-elif [ -n "$VERSION" ]; then
-    VERSION="${VERSION#v}"
     echo "${VERSION}" > "${VERSION_FILE}"
 else
     # Check if the version file exists; if not, create it
     if [ ! -f "${VERSION_FILE}" ]; then
-        echo "0.1" > "${VERSION_FILE}"
+        echo "0.1.0" > "${VERSION_FILE}"
     fi
 
     # Read the current version from the file
     CURRENT_VERSION=$(cat "${VERSION_FILE}")
 
     # Increment the version (Assuming a simple semantic versioning scenario)
-    IFS='.' read -r major minor <<< "$CURRENT_VERSION"
-    minor=$((minor + 1))  # Increment the minor version
-    VERSION="${major}.${minor}"
+    IFS='.' read -r major minor patch <<< "$CURRENT_VERSION"
+    patch=$(( ${patch:-0} + 1 ))  # Increment the patch version
+    VERSION="${major:-0}.${minor:-0}.${patch}"
 
     # Write the new version back to the version file
     echo "${VERSION}" > "${VERSION_FILE}"
