@@ -15,3 +15,5 @@ Then log on to your Raspberry Pi and install the .deb file.
 sudo dpkg -i throttle-x-0.8.1-arm64.deb
 ```
 This installation process creates a system user and also a service that will automatically start the application when the Raspberry Pi boots.
+When the Pi has booted up open a browser and enter the ipaddress of the PI and port 5000 to open the ThrottleX Dashboard.
+For example http://10.2.0.2:5000
