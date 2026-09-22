@@ -1,6 +1,7 @@
 @page "/"
 @inject WifredClientStore ClientStore
 @inject LoconetService LoconetService
+@inject ISystemHealthService HealthService
 @implements IDisposable
 
 <PageTitle>ThrottleX - Dashboard</PageTitle>
@@ -65,16 +66,40 @@
     <!-- Stat 4: System Health -->
     <div class="col-12 col-sm-6 col-xl-3">
         <div class="card stat-card border-0 shadow-sm h-100">
-            <div class="card-body d-flex align-items-center justify-content-between p-3">
-                <div>
-                    <span class="text-body-secondary small fw-medium text-uppercase tracking-wider">Gateway Status</span>
-                    <h2 class="mb-0 fw-bold mt-1 text-success">Active</h2>
-                    <div class="small mt-1 text-body-secondary">
-                        Real-time push enabled
+            <div class="card-body d-flex flex-column justify-content-between p-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="text-body-secondary small fw-medium text-uppercase tracking-wider">System Health</span>
+                        <h2 class="mb-0 fw-bold mt-1">@HealthMetrics.FormattedCpuUsage <span class="fs-6 text-body-secondary fw-normal">CPU</span></h2>
+                    </div>
+                    <div class="stat-icon-wrapper bg-secondary-subtle text-secondary rounded-3 p-3">
+                        <ShieldIcon/>
                     </div>
                 </div>
-                <div class="stat-icon-wrapper bg-secondary-subtle text-secondary rounded-3 p-3">
-                    <ShieldIcon/>
+                <div class="small mt-2 pt-2 border-top d-flex flex-column gap-1 text-body-secondary">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Memory:</span>
+                        <span class="fw-semibold text-body">@HealthMetrics.FormattedMemoryUsage <span class="fw-normal text-body-secondary">(@HealthMetrics.FormattedMemoryDetailed)</span></span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>App Memory:</span>
+                        <span class="fw-semibold text-body">@HealthMetrics.FormattedProcessMemory</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>App CPU (1/5/15m):</span>
+                        <span class="fw-semibold text-body">@HealthMetrics.FormattedAppCpuUsage</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span>Network:</span>
+                        <span class="fw-semibold text-body">@HealthMetrics.FormattedNetworkRate</span>
+                    </div>
+                    @if (HealthMetrics.CpuTemperatureCelsius.HasValue)
+                    {
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span>CPU Temp:</span>
+                            <span class="fw-semibold text-body">@HealthMetrics.FormattedCpuTemperature</span>
+                        </div>
+                    }
                 </div>
             </div>
         </div>

@@ -2,6 +2,7 @@ using Serilog;
 using Shared.LocoTable;
 using ThrottleX.Core.Loconet;
 using ThrottleX.Core.LocoTable;
+using ThrottleX.Core.SystemHealth;
 using WiThrottle;
 
 namespace ThrottleX.Core;
@@ -47,6 +48,13 @@ public class Startup
 
         services.AddSingleton<WiThrottleService>();
         services.AddHostedService(p => p.GetRequiredService<WiThrottleService>());
+
+        // Configure and add system health monitoring
+        services.Configure<SystemHealthOptions>(_configuration.GetSection("SystemHealth"));
+        services.AddSingleton<ISystemMetricsReader, LinuxSystemMetricsReader>();
+        services.AddSingleton<SystemHealthService>();
+        services.AddSingleton<ISystemHealthService>(sp => sp.GetRequiredService<SystemHealthService>());
+        services.AddHostedService(sp => sp.GetRequiredService<SystemHealthService>());
 
         // Configure and add website services
         services.AddRazorPages();

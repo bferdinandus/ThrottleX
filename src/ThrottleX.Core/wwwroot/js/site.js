@@ -1,7 +1,7 @@
-// Theme Manager for ThrottleX
+﻿// Theme Manager for ThrottleX
 window.themeManager = {
     getTheme: function () {
-        return localStorage.getItem('throttlex-theme') || 'dark';
+        return localStorage.getItem('throttlex-theme') || 'auto';
     },
     setTheme: function (theme) {
         localStorage.setItem('throttlex-theme', theme);
