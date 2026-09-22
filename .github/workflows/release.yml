@@ -5,12 +5,6 @@ on:
     tags:
       - 'v*'
       - '[0-9]*'
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Release version (e.g. 0.6 or v0.6). Leave empty to auto-increment version.txt'
-        required: false
-        default: ''
 
 permissions:
   contents: write
@@ -40,36 +34,14 @@ jobs:
       - name: Run Tests
         run: dotnet test --configuration Release
 
-      - name: Build Debian Package
-        id: build_package
-        run: |
-          chmod +x ./build-package.sh
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.version }}" ]; then
-            ./build-package.sh "${{ github.event.inputs.version }}"
-            RELEASE_TAG="v$(cat version.txt)"
-          elif [ "${{ github.ref_type }}" = "tag" ]; then
-            ./build-package.sh "${{ github.ref_name }}"
-            RELEASE_TAG="${{ github.ref_name }}"
-          else
-            ./build-package.sh
-            RELEASE_TAG="v$(cat version.txt)"
-          fi
-          
-          VERSION=$(cat version.txt)
-          DEB_FILE=$(ls throttle-x-*.deb | head -n 1)
-          
-          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-          echo "deb_file=${DEB_FILE}" >> "$GITHUB_OUTPUT"
-          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
-
       - name: Update version.txt in repository
+        id: update_version
         run: |
-          VERSION="${{ steps.build_package.outputs.version }}"
-          if [ "${{ github.ref_type }}" = "branch" ]; then
-            TARGET_BRANCH="${{ github.ref_name }}"
-          else
-            TARGET_BRANCH="${{ github.event.repository.default_branch }}"
-          fi
+          RAW_VERSION="${{ github.ref_name }}"
+          VERSION="${RAW_VERSION#v}"
+          RELEASE_TAG="${{ github.ref_name }}"
+          
+          TARGET_BRANCH="${{ github.event.repository.default_branch }}"
           if [ -z "$TARGET_BRANCH" ]; then
             TARGET_BRANCH="develop"
           fi
@@ -87,6 +59,18 @@ jobs:
             git commit -m "Update version.txt to ${VERSION} [skip ci]"
             git push origin "${TARGET_BRANCH}"
           fi
+          
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Build Debian Package
+        id: build_package
+        run: |
+          chmod +x ./build-package.sh
+          ./build-package.sh "${{ steps.update_version.outputs.version }}"
+          
+          DEB_FILE=$(ls throttle-x-*.deb | head -n 1)
+          echo "deb_file=${DEB_FILE}" >> "$GITHUB_OUTPUT"
 
       - name: Publish GitHub Release
         env:
@@ -94,7 +78,7 @@ jobs:
         run: |
             set -euo pipefail
             
-            RELEASE_TAG="${{ steps.build_package.outputs.release_tag }}"
+            RELEASE_TAG="${{ steps.update_version.outputs.release_tag }}"
             DEB_FILE="${{ steps.build_package.outputs.deb_file }}"
             
             if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then

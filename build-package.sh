@@ -24,12 +24,9 @@ for f in control.tpl preinst.tpl postinst.tpl service.tpl; do
   fi
 done
 
-# Determine version: prioritize CLI argument or env var, otherwise auto-increment from file
+# Determine version: prioritize CLI argument (e.g. from GitHub Actions tag), otherwise auto-increment from file
 if [ -n "$1" ]; then
     VERSION="${1#v}"
-    echo "${VERSION}" > "${VERSION_FILE}"
-elif [ -n "$VERSION" ]; then
-    VERSION="${VERSION#v}"
     echo "${VERSION}" > "${VERSION_FILE}"
 else
     # Check if the version file exists; if not, create it
