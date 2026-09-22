@@ -1,4 +1,4 @@
-﻿using Loconet;
+using Loconet;
 using Loconet.Msg;
 using Loconet.Msg.Accessor;
 using Shared;
@@ -31,8 +31,35 @@ public class LoconetSend : IDisposable
         Exception,
     }
 
-    public EState State { private set; get; } = EState.Init;
-    public CommandStation? GuessedCommandStation { private set; get; }
+    public event Action? OnStateChanged;
+
+    private EState _state = EState.Init;
+    public EState State 
+    { 
+        get => _state; 
+        private set 
+        { 
+            if (_state != value) 
+            { 
+                _state = value; 
+                OnStateChanged?.Invoke(); 
+            } 
+        } 
+    }
+
+    private CommandStation? _guessedCommandStation;
+    public CommandStation? GuessedCommandStation 
+    { 
+        get => _guessedCommandStation; 
+        private set 
+        { 
+            if (_guessedCommandStation != value) 
+            { 
+                _guessedCommandStation = value; 
+                OnStateChanged?.Invoke(); 
+            } 
+        } 
+    }
 
     public LoconetSend(LoconetClient loconetClient, CommandStationMirror mirror, ILoconet2Table locoTable)
     {

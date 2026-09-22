@@ -1,10 +1,11 @@
-﻿namespace ThrottleX.Core.LocoTable;
-
-using global::Loconet;
+﻿using global::Loconet;
 using ThrottleX.Core.Loconet;
 using Microsoft.Extensions.Logging;
 using Shared.LocoTable;
 using static Shared.LocoTable.OccupySlotResult;
+
+namespace ThrottleX.Core.LocoTable;
+
 
 public sealed class AllLoconetsReply : IDisposable
 {

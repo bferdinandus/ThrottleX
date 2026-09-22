@@ -1,0 +1,53 @@
+@inject WifredClientStore ClientStore
+@inject LoconetService LoconetService
+@implements IDisposable
+
+<nav class="navbar navbar-expand-lg border-bottom sticky-top bg-body-tertiary">
+    <div class="container-fluid px-3 px-lg-4">
+        <a class="navbar-brand d-flex align-items-center gap-2 fw-bold text-decoration-none" href="">
+            <span class="brand-icon d-flex align-items-center justify-content-center bg-primary text-white rounded-3 p-2 shadow-sm">
+                <TrainIcon Size="20"/>
+            </span>
+            <span class="fs-4 tracking-tight">Throttle<span class="text-primary">X</span></span>
+        </a>
+
+        <button class="navbar-toggler p-2 border rounded-3 shadow-none" type="button" @onclick="ToggleNavMenu" aria-controls="navbarSupportedContent" aria-expanded="@(!_collapseNavMenu)" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse @(NavMenuCssClass)" id="navbarSupportedContent">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-1 gap-lg-2 mt-2 mt-lg-0">
+                <li class="nav-item">
+                    <NavLink class="nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2" href="" Match="NavLinkMatch.All">
+                        <DashboardIcon/>
+                        Dashboard
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2" href="wifred-clients">
+                        <WifredIcon Size="16"/>
+                        WiFred Clients
+                        @if (OnlineClientsCount > 0)
+                        {
+                            <span class="badge rounded-pill bg-success ms-auto ms-lg-1">@OnlineClientsCount</span>
+                        }
+                    </NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link px-3 py-2 rounded-2 d-flex align-items-center gap-2" href="loconet-connections">
+                        <LoconetIcon Size="16"/>
+                        LocoNet Links
+                        @if (OperationalLoconetCount > 0)
+                        {
+                            <span class="badge rounded-pill bg-info ms-auto ms-lg-1">@OperationalLoconetCount</span>
+                        }
+                    </NavLink>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center gap-3 pt-3 pt-lg-0 mt-3 mt-lg-0">
+                <ThemeToggle/>
+            </div>
+        </div>
+    </div>
+</nav>

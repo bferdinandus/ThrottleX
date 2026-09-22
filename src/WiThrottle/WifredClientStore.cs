@@ -14,6 +14,13 @@ public class WifredClientStore
     private readonly IHttpClientFactory _httpClientFactory;
     private readonly ConcurrentDictionary<string, WifredClient> _clients = new();
 
+    public event Action? OnStoreChanged;
+
+    public void NotifyStoreChanged()
+    {
+        OnStoreChanged?.Invoke();
+    }
+
     public WifredClientStore(ILogger<WifredClientStore> logger, ILoggerFactory loggerFactory, IThrottle2Table locoTable, IHttpClientFactory httpClientFactory)
     {
         _logger = logger;
@@ -24,14 +31,24 @@ public class WifredClientStore
 
     public WifredClient GetOrCreate(string uid, string name)
     {
-        return _clients.GetOrAdd(uid, _ =>
+        bool isNew = false;
+        var client = _clients.GetOrAdd(uid, _ =>
         {
+            isNew = true;
             var httpClient = _httpClientFactory.CreateClient("WiFredClient");
             WifredClient newClient = new WifredClient(uid, name, _loggerFactory.CreateLogger<WifredClient>(), _locoTable, httpClient);
+            newClient.OnClientChanged += NotifyStoreChanged;
             _logger.LogInformation("Created new WifredClient with name: `{name}` and uid: {uid}", name, uid);
 
             return newClient;
         });
+
+        if (isNew)
+        {
+            NotifyStoreChanged();
+        }
+
+        return client;
     }
 
     public WifredClient? GetClient(string id)
@@ -46,10 +63,12 @@ public class WifredClientStore
         if (_clients.TryRemove(id, out WifredClient? client))
         {
             string clientName = client.Name;
+            client.OnClientChanged -= NotifyStoreChanged;
             client.Disconnect();
             client = null;
             
             _logger.LogInformation("Removed WifredClient with name: `{name}` and uid: {uid}", clientName, id);
+            NotifyStoreChanged();
         }
         else
         {
@@ -59,7 +78,9 @@ public class WifredClientStore
 
     public void AddClient(WifredClient client)
     {
+        client.OnClientChanged += NotifyStoreChanged;
         _clients[client.Id] = client;
+        NotifyStoreChanged();
     }
 
     public IEnumerable<WifredClient> GetAllClients() => _clients.Values;

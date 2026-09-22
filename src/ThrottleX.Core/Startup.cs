@@ -1,4 +1,3 @@
-﻿using Hydro.Configuration;
 using Serilog;
 using Shared.LocoTable;
 using ThrottleX.Core.Loconet;
@@ -25,17 +24,18 @@ public class Startup
 
         LoconetOptions? loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
         
-        Console.WriteLine("Loconet config host: " + loconetConfig?.Clients.Select(c => c.Host).First());
+        Console.WriteLine("Loconet config host: " + loconetConfig?.Clients.Select(c => c.Host).FirstOrDefault());
         services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
         
-        services.AddHostedService(sp =>
+        services.AddSingleton<LoconetService>(sp =>
         {
             var loggerService = sp.GetService<ILogger<LoconetService>>();
             Console.WriteLine("logger service:" + loggerService);
-            var loconet2Tableservice =  sp.GetService<ILoconet2Table>();
+            var loconet2Tableservice = sp.GetService<ILoconet2Table>();
             Console.WriteLine("loconet 2 table service: " + loconet2Tableservice);
             return new LoconetService(loggerService, loconet2Tableservice!, loconetConfig);
         });
+        services.AddHostedService(sp => sp.GetRequiredService<LoconetService>());
 
         // Configure and add WiThrottle relates services
         services.AddHttpClient("WiFredClient", client =>
@@ -50,7 +50,7 @@ public class Startup
 
         // Configure and add website services
         services.AddRazorPages();
-        services.AddHydro();
+        services.AddServerSideBlazor();
     }
 
     public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -62,7 +62,7 @@ public class Startup
         }
         else
         {
-            app.UseExceptionHandler("/Home/Error");
+            app.UseExceptionHandler("/Error");
         }
 
         app.UseStaticFiles();
@@ -75,8 +75,8 @@ public class Startup
 
         app.UseEndpoints(routeBuilder =>
         {
-            routeBuilder.MapRazorPages();
+            routeBuilder.MapBlazorHub();
+            routeBuilder.MapFallbackToPage("/_Host");
         });
-        app.UseHydro(env); // Hydro
     }
 }

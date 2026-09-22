@@ -1,4 +1,4 @@
-﻿using Loconet;
+using Loconet;
 using Loconet.Msg;
 using Loconet.Msg.Accessor;
 using Shared.LocoTable;

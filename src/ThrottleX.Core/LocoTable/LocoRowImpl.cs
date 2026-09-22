@@ -1,4 +1,4 @@
-﻿using Loconet;
+using Loconet;
 using Microsoft.Extensions.Logging;
 using Shared.LocoTable;
 using Shared.Models;

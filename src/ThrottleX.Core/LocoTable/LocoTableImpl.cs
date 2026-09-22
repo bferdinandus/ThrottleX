@@ -1,4 +1,4 @@
-﻿using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging;
 using Shared.LocoTable;
 using Shared.Models;
 using System.Collections;

@@ -1,4 +1,6 @@
 ﻿using System.Net.Sockets;
+using System.Security;
+using System.Text.RegularExpressions;
 using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.LocoTable;
@@ -7,7 +9,7 @@ using WiThrottle.Models.WiFred;
 
 namespace WiThrottle;
 
-public class WifredClient
+public partial class WifredClient
 {
     private readonly ILogger _logger;
     public string Id { get; private set; }
@@ -20,12 +22,20 @@ public class WifredClient
 
     public string GetIpAddress() => _customTcpClient?.GetIpAddress() ?? string.Empty;
     public string GetLocoAdresses() => string.Join(", ", _myLocos.Keys.Select(k => k.Address.ToString()));
+    public int GetLocoCount() => _myLocos.Count;
 
     private CustomTcpClient? _customTcpClient;
     private readonly Dictionary<IAddress, IThrottle2Row> _myLocos = new();
     private readonly IThrottle2Table _locoTable;
     private readonly HttpClient _httpClient;
     private CancellationToken _stoppingToken;
+
+    public event Action? OnClientChanged;
+
+    public void NotifyClientChanged()
+    {
+        OnClientChanged?.Invoke();
+    }
 
     public WifredClient(string id, string name, ILogger<WifredClient> logger, IThrottle2Table locoTable, HttpClient httpClient)
     {
@@ -41,7 +51,7 @@ public class WifredClient
     {
         await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
-        
+
         _ = BatteryVoltageLoopAsync(stoppingToken);
 
         while (!stoppingToken.IsCancellationRequested && IsConnected)
@@ -65,6 +75,7 @@ public class WifredClient
             }
 
             LastMessage = DateTime.Now;
+            NotifyClientChanged();
         }
     }
 
@@ -85,39 +96,53 @@ public class WifredClient
         if (IsConnected) Disconnect();
 
         _myLocos.Clear();
-        
+
         _customTcpClient = client;
         ConnectedAt = DateTime.Now;
+        NotifyClientChanged();
     }
 
     private async Task UpdateBatteryVoltageAsync()
     {
         var url = new Uri($"http://{GetIpAddress()}/api/getConfigXML");
-    
+
         try
         {
             var xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
-            
-            if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
-            {
-                xmlContent = "<?xml" + xmlContent.Substring(5);
-            }
-        
+            xmlContent = NormalizeXmlContent(xmlContent);
+
             var serializer = new System.Xml.Serialization.XmlSerializer(typeof(WiFredConfig));
             using var stringReader = new StringReader(xmlContent);
-        
+
             var config = (WiFredConfig?)serializer.Deserialize(stringReader);
-        
+
             if (config != null)
             {
                 BatteryVoltage = config.BatteryVoltage.Value;
                 _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV", Id, BatteryVoltage);
+                NotifyClientChanged();
             }
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[{uid}] Failed to update battery voltage from {Url}", Id, url);
         }
+    }
+
+    [GeneratedRegex("""(<Key\b[^>]*?\bvalue\s*=\s*")([^"]*)(")""", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
+    private static partial Regex KeyAttributeRegex();
+
+    private static string NormalizeXmlContent(string xmlContent)
+    {
+        if (xmlContent.StartsWith("<?XML", StringComparison.OrdinalIgnoreCase))
+        {
+            xmlContent = string.Concat("<?xml", xmlContent.AsSpan(5));
+        }
+
+        // Escape raw '<' characters only inside <Key value="...">.
+        xmlContent = KeyAttributeRegex().Replace( xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
+
+        return xmlContent;
     }
 
     public void Disconnect()
@@ -127,6 +152,7 @@ public class WifredClient
         ConnectedAt = null;
         _customTcpClient?.Dispose();
         _customTcpClient = null!;
+        NotifyClientChanged();
     }
 
     #region MultiThrottle
@@ -238,6 +264,8 @@ public class WifredClient
                 row.Deactivate();
             });
         }
+
+        NotifyClientChanged();
     }
 
     private async Task MtAddAsync(char mtIdentifier, IAddress? address)
@@ -274,6 +302,7 @@ public class WifredClient
                 await _customTcpClient?.SendMessageAsync($"{prefix}V{slot.SlotSpeed.WiThrottle}")!;
                 await _customTcpClient?.SendMessageAsync($"{prefix}R{(int)slot.SlotDirection}")!;
                 //TODO forward functions
+                NotifyClientChanged();
                 return; // finished for now
 
             case OccupySlotResult.Occupied:

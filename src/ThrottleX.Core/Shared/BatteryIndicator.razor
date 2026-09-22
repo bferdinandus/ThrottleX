@@ -1,0 +1,62 @@
+<div class="d-inline-flex align-items-center gap-2 battery-indicator" title="@TooltipText">
+    <div class="battery-shell @BadgeClass border rounded px-2 py-1 d-inline-flex align-items-center gap-1">
+        <BatteryIndicatorIcon Size="16" CLass="@BatteryIconClass" Level="@Level" />
+        @if (Millivolts <= 0)
+        {
+            <span class="fw-semibold">N/A</span>
+        }
+        else
+        {
+            <span class="fw-semibold">@VoltageString V</span>
+            <small class="text-body-secondary">(@Percentage%)</small>
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter] public int Millivolts { get; set; }
+
+    private double Volts => Millivolts / 1000.0;
+    private string VoltageString => Volts.ToString("0.00");
+
+    private int Percentage
+    {
+        get
+        {
+            if (Millivolts <= 0) return 0;
+
+            // Approximate Li-Ion 3.45V (0%) to 4.2V (100%)
+            const double minimumVoltage = 3.45;
+            const double maximumVoltage = 4.2;
+            var percent = (int)Math.Round((Volts - minimumVoltage) / (maximumVoltage - minimumVoltage) * 100);
+
+            return Math.Clamp(percent, 0, 100);
+        }
+    }
+
+    private string BatteryIconClass => Percentage switch
+    {
+        >= 80 => "bi-battery-full text-success",
+        >= 40 => "bi-battery-half text-warning",
+        > 0 => "bi-battery text-danger",
+        _ => "bi-battery"
+    };
+
+    private string BadgeClass => Percentage switch
+    {
+        >= 60 => "bg-success-subtle text-success-emphasis border-success-subtle",
+        >= 30 => "bg-warning-subtle text-warning-emphasis border-warning-subtle",
+        > 0 => "bg-danger-subtle text-danger-emphasis border-danger-subtle",
+        _ => ""
+    };
+
+    private BatteryIndicatorIcon.BatteryLevel Level => Percentage switch
+    {
+        >= 80 => ThrottleX.Core.Shared.Icons.BatteryIndicatorIcon.BatteryLevel.Full,
+        >= 40 => ThrottleX.Core.Shared.Icons.BatteryIndicatorIcon.BatteryLevel.Half,
+        > 0 => ThrottleX.Core.Shared.Icons.BatteryIndicatorIcon.BatteryLevel.Empty,
+        _ => ThrottleX.Core.Shared.Icons.BatteryIndicatorIcon.BatteryLevel.NotAvailable
+    };
+
+    private string TooltipText => Millivolts > 0 ? $"{VoltageString} V ({Millivolts} mV) - ~{Percentage}%" : "Battery voltage unknown";
+}

@@ -1,4 +1,4 @@
-﻿using Loconet;
+using Loconet;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Options;
 using Shared.LocoTable;
@@ -17,6 +17,13 @@ public class LoconetService : BackgroundService
     /// Just until I learnt how to geht the one instance properly....
     /// </summary>
     public static LoconetService? Instance;
+
+    public event Action? OnConnectionsChanged;
+
+    public void NotifyConnectionsChanged()
+    {
+        OnConnectionsChanged?.Invoke();
+    }
 
     public IEnumerable<(LoconetClient client, LoconetSend send)> Clients => _connections;
 
@@ -41,13 +48,16 @@ public class LoconetService : BackgroundService
 
             var client = new LoconetClient(index, opt.Host, opt.Port, _logger);
             client.OnMessageReceived += mirror.OnMessage;
+            client.OnStateChanged += NotifyConnectionsChanged;
 
             var send = new LoconetSend(client, mirror, _locoTable);
+            send.OnStateChanged += NotifyConnectionsChanged;
 
             _connections.Add((client, send));
             client.Start();
             send.Start();
         }
+        NotifyConnectionsChanged();
         return Task.CompletedTask;
     }
 
@@ -55,8 +65,11 @@ public class LoconetService : BackgroundService
     {
         foreach (var connection in _connections)
         {
+            connection.send.OnStateChanged -= NotifyConnectionsChanged;
+            connection.client.OnStateChanged -= NotifyConnectionsChanged;
             connection.send.Dispose();
             connection.client.Dispose();
         }
+        NotifyConnectionsChanged();
     }
 }

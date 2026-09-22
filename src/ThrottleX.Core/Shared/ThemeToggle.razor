@@ -1,0 +1,41 @@
+@inject IJSRuntime JSRuntime
+
+<div class="dropdown">
+    <button class="btn btn-outline-secondary btn-sm dropdown-toggle d-flex align-items-center gap-1" type="button" id="themeDropdown" data-bs-toggle="dropdown" aria-expanded="false" title="Change theme">
+        @switch (_currentTheme)
+        {
+            case "dark":
+                <MoonStarsIcon Class="text-warning"/>
+                <span class="d-none d-sm-inline ms-1">Dark</span>
+                break;
+            case "light":
+                <SunIcon Class="text-warning"/>
+                <span class="d-none d-sm-inline ms-1">Light</span>
+                break;
+            default:
+                <CircleHalfIcon Class="text-warning"/>
+                <span class="d-none d-sm-inline ms-1">Auto</span>
+                break;
+        }
+    </button>
+    <ul class="dropdown-menu dropdown-menu-start dropdown-menu-lg-end shadow" aria-labelledby="themeDropdown">
+        <li>
+            <button class="dropdown-item d-flex align-items-center gap-2 @(_currentTheme == "dark" ? "active" : "")" @onclick='() => SetTheme("dark")'>
+                <MoonStarsIcon/>
+                Dark
+            </button>
+        </li>
+        <li>
+            <button class="dropdown-item d-flex align-items-center gap-2 @(_currentTheme == "light" ? "active" : "")" @onclick='() => SetTheme("light")'>
+                <SunIcon/>
+                Light
+            </button>
+        </li>
+        <li>
+            <button class="dropdown-item d-flex align-items-center gap-2 @(_currentTheme == "auto" ? "active" : "")" @onclick='() => SetTheme("auto")'>
+                <CircleHalfIcon/>
+                Auto (System)
+            </button>
+        </li>
+    </ul>
+</div>
