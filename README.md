@@ -1,6 +1,8 @@
 # ThrottleX
 **wiThrottle to LocoNet converter with webserver**
 
+![ThrottleX Dashboard](.github/images/throttle-x-dashboard.png)
+
 Normal Usage:
 
 Download the .deb file from the release page. Upload it to your Raspberry Pi. 
