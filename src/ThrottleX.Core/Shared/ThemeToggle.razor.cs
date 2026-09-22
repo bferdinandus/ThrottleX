@@ -4,7 +4,7 @@ namespace ThrottleX.Core.Shared;
 
 public partial class ThemeToggle
 {
-    private string _currentTheme = "dark";
+    private string _currentTheme = "auto";
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
