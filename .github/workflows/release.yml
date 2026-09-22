@@ -29,7 +29,13 @@ jobs:
       - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.0.x'
+          dotnet-version: 10.0.100
+
+      - name: Restore dependencies
+        run: dotnet restore ThrottleX.sln
+
+      - name: Build solution
+        run: dotnet build ThrottleX.sln --configuration Release --no-restore
 
       - name: Run Tests
         run: dotnet test --configuration Release
@@ -84,10 +90,18 @@ jobs:
 
       - name: Publish GitHub Release
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          RELEASE_TAG="${{ steps.build_package.outputs.release_tag }}"
-          DEB_FILE="${{ steps.build_package.outputs.deb_file }}"
-          gh release create "${RELEASE_TAG}" "${DEB_FILE}" \
-            --title "Release ${RELEASE_TAG}" \
-            --generate-notes
+            set -euo pipefail
+            
+            RELEASE_TAG="${{ steps.build_package.outputs.release_tag }}"
+            DEB_FILE="${{ steps.build_package.outputs.deb_file }}"
+            
+            if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+              echo "Release $RELEASE_TAG already exists; uploading package"
+              gh release upload "$RELEASE_TAG" "$DEB_FILE" --clobber
+            else
+              gh release create "$RELEASE_TAG" "$DEB_FILE" \
+                --title "Release ${RELEASE_TAG}" \
+                --generate-notes
+            fi
