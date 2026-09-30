@@ -39,6 +39,7 @@ public class LoconetService : BackgroundService
 
     protected override Task ExecuteAsync(CancellationToken stoppingToken)
     {
+        _logger.LogInformation("Loconet config host: {Host}", _options.Clients.FirstOrDefault()?.Host);
         stoppingToken.Register(DisposeClients);
 
         for (int index=0; index<_options.Clients.Count; index++)
