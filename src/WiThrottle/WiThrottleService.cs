@@ -53,7 +53,7 @@ public class WiThrottleService : BackgroundService
         }
         else
         {
-            _logger.LogInformation("Advertising bonjour only on all network interfaces.");
+            _logger.LogInformation("Advertising bonjour on all network interfaces.");
         }
 
         ServiceProfile serviceProfile = new("fremo", "_withrottle._tcp", _options.Port, ipAddresses);

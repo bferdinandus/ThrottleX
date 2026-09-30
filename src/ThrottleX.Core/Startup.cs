@@ -24,17 +24,14 @@ public class Startup
         services.AddSingleton<IThrottle2Table>(sp => sp.GetService<LocoTableImpl>()!);
 
         LoconetOptions? loconetConfig = _configuration.GetSection("Loconet").Get<LoconetOptions>();
-        
-        Console.WriteLine("Loconet config host: " + loconetConfig?.Clients.Select(c => c.Host).FirstOrDefault());
         services.Configure<LoconetOptions>(_configuration.GetSection("Loconet"));
         
         services.AddSingleton<LoconetService>(sp =>
         {
-            var loggerService = sp.GetService<ILogger<LoconetService>>();
-            Console.WriteLine("logger service:" + loggerService);
-            var loconet2Tableservice = sp.GetService<ILoconet2Table>();
-            Console.WriteLine("loconet 2 table service: " + loconet2Tableservice);
-            return new LoconetService(loggerService, loconet2Tableservice!, loconetConfig);
+            var loggerService = sp.GetRequiredService<ILogger<LoconetService>>();
+            var loconet2TableService = sp.GetRequiredService<ILoconet2Table>();
+            
+            return new LoconetService(loggerService, loconet2TableService, loconetConfig);
         });
         services.AddHostedService(sp => sp.GetRequiredService<LoconetService>());
 
