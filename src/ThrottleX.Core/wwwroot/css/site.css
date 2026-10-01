@@ -413,6 +413,58 @@ html, body {
 }
 
 /* ==========================================================================
+   Alerts & Notifications
+   ========================================================================== */
+.alert {
+  border-width: 1px;
+  border-style: solid;
+}
+
+.alert-warning {
+  background-color: var(--bs-warning-subtle-bg) !important;
+  border-color: var(--bs-warning-subtle-border) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.alert-success {
+  background-color: var(--bs-success-subtle-bg) !important;
+  border-color: var(--bs-success-subtle-border) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.alert-danger {
+  background-color: var(--bs-danger-subtle-bg) !important;
+  border-color: var(--bs-danger-subtle-border) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.alert-info {
+  background-color: var(--bs-info-subtle-bg) !important;
+  border-color: var(--bs-info-subtle-border) !important;
+  color: var(--bs-body-color) !important;
+}
+
+.alert-warning .alert-heading {
+  color: var(--bs-warning-emphasis-color) !important;
+}
+
+.alert-success .alert-heading {
+  color: var(--bs-success-emphasis-color) !important;
+}
+
+.alert-danger .alert-heading {
+  color: var(--bs-danger-emphasis-color) !important;
+}
+
+.alert-info .alert-heading {
+  color: var(--bs-info-emphasis-color) !important;
+}
+
+[data-bs-theme="dark"] .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+/* ==========================================================================
    Code & Telemetry Formatting
    ========================================================================== */
 code {

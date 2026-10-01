@@ -12,7 +12,7 @@ public partial class ThemeToggle
         {
             try
             {
-                var theme = await JSRuntime.InvokeAsync<string>("themeManager.getTheme");
+                var theme = await JsRuntime.InvokeAsync<string>("themeManager.getTheme");
                 if (!string.IsNullOrEmpty(theme))
                 {
                     _currentTheme = theme;
@@ -31,7 +31,7 @@ public partial class ThemeToggle
         _currentTheme = theme;
         try
         {
-            await JSRuntime.InvokeVoidAsync("themeManager.setTheme", theme);
+            await JsRuntime.InvokeVoidAsync("themeManager.setTheme", theme);
         }
         catch
         {
