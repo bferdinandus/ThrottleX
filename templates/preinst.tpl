@@ -5,12 +5,13 @@ case "$1" in
     install|upgrade)
         # Check if the service is active, and stop it if it is
         if systemctl is-active --quiet {{EXECUTABLE}}.service 2>/dev/null; then
-            echo "Stopping the existing service {{EXECUTABLE}} before installation."
+            echo "Stopping active service {{EXECUTABLE}} before package installation..."
             systemctl stop {{EXECUTABLE}}.service 2>/dev/null || true
         fi
         ;;
 
     abort-upgrade)
+        echo "Aborting upgrade for {{EXECUTABLE}}..."
         ;;
 
     *)

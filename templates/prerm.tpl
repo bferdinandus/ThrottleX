@@ -21,6 +21,7 @@ case "$1" in
         ;;
 
     failed-upgrade)
+        echo "Handling failed upgrade for {{EXECUTABLE}}..."
         ;;
 
     *)
