@@ -15,6 +15,12 @@ case "$1" in
             rm -rf /var/log/{{SUBFOLDER}}
         fi
 
+        # Remove application directory if still present
+        if [ -d "/usr/local/share/{{SUBFOLDER}}" ]; then
+            echo "Removing application directory (/usr/local/share/{{SUBFOLDER}})..."
+            rm -rf /usr/local/share/{{SUBFOLDER}}
+        fi
+
         # Remove the system user and group on purge
         if id -u throttlex &>/dev/null; then
             echo "Removing system user 'throttlex'..."

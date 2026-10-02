@@ -11,6 +11,16 @@ case "$1" in
             echo "Disabling service {{EXECUTABLE}}..."
             systemctl disable {{EXECUTABLE}}.service 2>/dev/null || true
         fi
+
+        # Remove runtime-generated files (e.g. .aspnet data protection keys, logs) so dpkg can cleanly remove the directory
+        if [ -d "/usr/local/share/{{SUBFOLDER}}/.aspnet" ]; then
+            echo "Cleaning runtime data in /usr/local/share/{{SUBFOLDER}}..."
+            rm -rf "/usr/local/share/{{SUBFOLDER}}/.aspnet"
+        fi
+        if [ -d "/usr/local/share/{{SUBFOLDER}}/Logs" ]; then
+            echo "Cleaning leftover logs in /usr/local/share/{{SUBFOLDER}}..."
+            rm -rf "/usr/local/share/{{SUBFOLDER}}/Logs"
+        fi
         ;;
 
     upgrade)
