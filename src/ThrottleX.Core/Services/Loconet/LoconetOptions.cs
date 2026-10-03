@@ -1,4 +1,4 @@
-﻿namespace ThrottleX.Core.Loconet
+﻿namespace ThrottleX.Core.Services.Loconet
 {
     public class LoconetOptions
     {

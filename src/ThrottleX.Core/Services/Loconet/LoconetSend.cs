@@ -1,13 +1,11 @@
 using Loconet;
 using Loconet.Msg;
 using Loconet.Msg.Accessor;
-using Shared;
 using Shared.LocoTable;
 using Shared.Models;
-using ThrottleX.Core.LocoTable;
-using static ThrottleX.Core.Loconet.SlotControl.State;
+using static ThrottleX.Core.Services.Loconet.SlotControl.State;
 
-namespace ThrottleX.Core.Loconet;
+namespace ThrottleX.Core.Services.Loconet;
 
 public class LoconetSend : IDisposable
 {
@@ -265,7 +263,7 @@ public class LoconetSend : IDisposable
 
         _loconetClient.BlockingSend(request); // fire and forget
 
-        return SlotControl.State.Inactive;
+        return Inactive;
     }
 
     private class OccupiedException : Exception { }

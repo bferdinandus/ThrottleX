@@ -2,7 +2,7 @@ using System.Diagnostics;
 using System.Globalization;
 using Microsoft.Extensions.Options;
 
-namespace ThrottleX.Core.SystemTime;
+namespace ThrottleX.Core.Services.SystemTime;
 
 public class SystemTimeService : ISystemTimeService
 {

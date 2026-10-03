@@ -1,7 +1,7 @@
 using Serilog;
 using Serilog.Events;
 
-namespace ThrottleX.Core.Logging;
+namespace ThrottleX.Core.Extensions;
 
 public static class SerilogConfigurationExtensions
 {

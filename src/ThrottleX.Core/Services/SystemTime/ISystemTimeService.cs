@@ -1,4 +1,4 @@
-namespace ThrottleX.Core.SystemTime;
+namespace ThrottleX.Core.Services.SystemTime;
 
 public interface ISystemTimeService
 {

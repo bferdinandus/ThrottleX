@@ -1,4 +1,6 @@
+@using ThrottleX.Core.Services.Common
 @inherits LayoutComponentBase
+@inject IAppVersionService AppVersion
 
 <div class="page d-flex flex-column min-vh-100">
     <NavMenu />
@@ -13,12 +15,12 @@
     <footer class="footer mt-auto py-3 border-top bg-body-tertiary text-body-secondary">
         <div class="container-fluid px-3 px-lg-4 d-flex flex-column flex-sm-row justify-content-between align-items-center gap-2 small">
             <div class="d-flex align-items-center gap-2">
-                <span class="fw-semibold">ThrottleX</span>
-                <span>&bull;</span>
+                <span class="fw-semibold">ThrottleX @AppVersion.DisplayVersion</span>
+                <span>&#8226;</span>
                 <span>Model Railroad WiFi Throttle Gateway</span>
             </div>
             <div>
-                <span>Powered by .NET 10 &amp; Blazor Server</span>
+                <span>Powered by .NET 10 &#38; Blazor Server</span>
             </div>
         </div>
     </footer>
