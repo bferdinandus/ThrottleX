@@ -5,6 +5,9 @@
     <RuntimeIdentifiers>linux-arm64</RuntimeIdentifiers>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Injects version from root version.txt directly into assembly metadata at compile time -->
+    <VersionPrefix>$([System.IO.File]::ReadAllText('$(MSBuildThisFileDirectory)../../version.txt').Trim())</VersionPrefix>
   </PropertyGroup>
 
   <ItemGroup>
