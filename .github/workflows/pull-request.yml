@@ -6,6 +6,9 @@ on:
             - opened
             - synchronize
             - reopened
+    pull_request_target:
+        types:
+            - closed
 
 permissions:
     contents: read
@@ -13,11 +16,16 @@ permissions:
 jobs:
     build-and-test:
         name: Build and run unit tests
+        # Skip if PR is closed but not merged
+        if: github.event_name == 'pull_request' || github.event.pull_request.merged == true
         runs-on: ubuntu-latest
         
         steps:
             - name: Check out repository
               uses: actions/checkout@v7
+              with:
+                # Use merge commit ref when PR is merged
+                ref: ${{ github.event.pull_request.merge_commit_sha || github.sha }}
 
             - name: Set up .NET SDK
               uses: actions/setup-dotnet@v6
