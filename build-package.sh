@@ -17,7 +17,7 @@ SHARE_DIR="${PKG_DIR}/usr/local/share/${SUBFOLDER}"
 SYSTEMD_DIR="${PKG_DIR}/etc/systemd/system"
 
 # Ensure templates exist
-for f in control.tpl preinst.tpl postinst.tpl service.tpl; do
+for f in control.tpl preinst.tpl postinst.tpl prerm.tpl postrm.tpl service.tpl; do
   if [ ! -f "${TEMPLATES_DIR}/${f}" ]; then
     echo "Missing template: ${TEMPLATES_DIR}/${f}"
     exit 1
@@ -80,6 +80,14 @@ chmod 755 "${DEBIAN_DIR}/preinst"
 # Create post-installation script
 render_template "postinst.tpl" "${DEBIAN_DIR}/postinst"
 chmod 755 "${DEBIAN_DIR}/postinst"
+
+# Create pre-removal script
+render_template "prerm.tpl" "${DEBIAN_DIR}/prerm"
+chmod 755 "${DEBIAN_DIR}/prerm"
+
+# Create post-removal script
+render_template "postrm.tpl" "${DEBIAN_DIR}/postrm"
+chmod 755 "${DEBIAN_DIR}/postrm"
 
 # Create service file with network dependencies and user directive
 render_template "service.tpl" "${SYSTEMD_DIR}/${EXECUTABLE}.service"
