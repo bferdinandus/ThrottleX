@@ -1,7 +1,6 @@
 ﻿using Loconet.Msg;
-using Microsoft.Extensions.Logging;
 
-namespace ThrottleX.Core.Loconet;
+namespace ThrottleX.Core.Services.Loconet;
 
 public class SlotData
 {

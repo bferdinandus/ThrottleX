@@ -1,8 +1,7 @@
 ﻿using Loconet;
 using Loconet.Msg;
-using Microsoft.Extensions.Logging;
 
-namespace ThrottleX.Core.Loconet;
+namespace ThrottleX.Core.Services.Loconet;
 
 /// <summary>
 /// Locally known parts of the slot table of one command station

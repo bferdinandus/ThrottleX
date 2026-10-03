@@ -1,6 +1,6 @@
 using Shared.LocoTable;
 
-namespace ThrottleX.Core.LocoTable;
+namespace ThrottleX.Core.Services.LocoTable;
 
 /// <summary>
 /// Our knowledge about a certain function of a certain loco address.

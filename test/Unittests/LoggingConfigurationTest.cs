@@ -1,9 +1,8 @@
-using System.Collections.Generic;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using Serilog.Events;
-using ThrottleX.Core.Logging;
-using Xunit;
+using ThrottleX.Core.Extensions;
 
 namespace Unittests;
 
@@ -83,7 +82,7 @@ public class LoggingConfigurationTest
         }
         """;
         var configBuilder = new ConfigurationBuilder();
-        configBuilder.AddJsonStream(new System.IO.MemoryStream(System.Text.Encoding.UTF8.GetBytes(json)));
+        configBuilder.AddJsonStream(new MemoryStream(Encoding.UTF8.GetBytes(json)));
         var configuration = configBuilder.Build();
 
         var loggerConfig = new LoggerConfiguration()

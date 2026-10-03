@@ -1,9 +1,6 @@
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
-namespace ThrottleX.Core.SystemHealth;
+namespace ThrottleX.Core.Services.SystemHealth;
 
 public class SystemHealthService : BackgroundService, ISystemHealthService
 {

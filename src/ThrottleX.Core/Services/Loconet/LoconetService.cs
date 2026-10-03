@@ -1,10 +1,7 @@
 using Loconet;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Options;
 using Shared.LocoTable;
-using ThrottleX.Core.LocoTable;
 
-namespace ThrottleX.Core.Loconet;
+namespace ThrottleX.Core.Services.Loconet;
 
 public class LoconetService : BackgroundService
 {

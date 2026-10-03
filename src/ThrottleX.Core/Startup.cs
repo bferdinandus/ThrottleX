@@ -1,9 +1,10 @@
 using Serilog;
 using Shared.LocoTable;
-using ThrottleX.Core.Loconet;
-using ThrottleX.Core.LocoTable;
-using ThrottleX.Core.SystemHealth;
-using ThrottleX.Core.SystemTime;
+using ThrottleX.Core.Services.Common;
+using ThrottleX.Core.Services.Loconet;
+using ThrottleX.Core.Services.LocoTable;
+using ThrottleX.Core.Services.SystemHealth;
+using ThrottleX.Core.Services.SystemTime;
 using WiThrottle;
 
 namespace ThrottleX.Core;
@@ -58,6 +59,9 @@ public class Startup
         services.Configure<SystemTimeOptions>(_configuration.GetSection("SystemTime"));
         services.AddSingleton(TimeProvider.System);
         services.AddSingleton<ISystemTimeService, SystemTimeService>();
+
+        // Register App Version Service
+        services.AddSingleton<IAppVersionService, AppVersionService>();
 
         // Configure and add website services
         services.AddRazorPages();

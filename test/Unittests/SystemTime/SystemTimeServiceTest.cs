@@ -3,7 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using ThrottleX.Core;
-using ThrottleX.Core.SystemTime;
+using ThrottleX.Core.Services.SystemTime;
 
 namespace Unittests.SystemTime;
 

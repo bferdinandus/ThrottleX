@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Globalization;
 
-namespace ThrottleX.Core.SystemHealth;
+namespace ThrottleX.Core.Services.SystemHealth;
 
 public class LinuxSystemMetricsReader : ISystemMetricsReader
 {

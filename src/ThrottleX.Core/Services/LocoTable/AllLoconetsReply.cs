@@ -1,10 +1,8 @@
-﻿using global::Loconet;
-using ThrottleX.Core.Loconet;
-using Microsoft.Extensions.Logging;
-using Shared.LocoTable;
+﻿using Shared.LocoTable;
+using ThrottleX.Core.Services.Loconet;
 using static Shared.LocoTable.OccupySlotResult;
 
-namespace ThrottleX.Core.LocoTable;
+namespace ThrottleX.Core.Services.LocoTable;
 
 
 public sealed class AllLoconetsReply : IDisposable

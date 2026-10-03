@@ -1,4 +1,4 @@
-using ThrottleX.Core.SystemHealth;
+using ThrottleX.Core.Services.SystemHealth;
 using WiThrottle;
 
 namespace ThrottleX.Core.Pages;

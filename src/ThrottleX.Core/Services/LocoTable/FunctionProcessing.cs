@@ -1,7 +1,7 @@
-using Shared.LocoTable;
 using System.Collections.Concurrent;
+using Shared.LocoTable;
 
-namespace ThrottleX.Core.LocoTable;
+namespace ThrottleX.Core.Services.LocoTable;
 
 public class FunctionProcessing
 {
