@@ -3,6 +3,7 @@ using Shared.LocoTable;
 using ThrottleX.Core.Loconet;
 using ThrottleX.Core.LocoTable;
 using ThrottleX.Core.SystemHealth;
+using ThrottleX.Core.SystemTime;
 using WiThrottle;
 
 namespace ThrottleX.Core;
@@ -52,6 +53,11 @@ public class Startup
         services.AddSingleton<SystemHealthService>();
         services.AddSingleton<ISystemHealthService>(sp => sp.GetRequiredService<SystemHealthService>());
         services.AddHostedService(sp => sp.GetRequiredService<SystemHealthService>());
+
+        // Configure and add system time service
+        services.Configure<SystemTimeOptions>(_configuration.GetSection("SystemTime"));
+        services.AddSingleton(TimeProvider.System);
+        services.AddSingleton<ISystemTimeService, SystemTimeService>();
 
         // Configure and add website services
         services.AddRazorPages();

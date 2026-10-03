@@ -1,0 +1,64 @@
+@inject ISystemTimeService TimeService
+@inject IJSRuntime JsRuntime
+@inject ILogger<TimeSyncAlert> Logger
+@implements IDisposable
+
+@if (_isTimeDifferent && !_isDismissed)
+{
+    <div class="alert alert-warning shadow-sm d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3 p-3 rounded-3" role="alert">
+        <div class="d-flex align-items-start gap-3">
+            <div class="p-2 rounded-circle bg-warning text-dark d-flex align-items-center justify-content-center flex-shrink-0 mt-1" style="width: 36px; height: 36px;">
+                <ClockIcon Size="20" />
+            </div>
+            <div>
+                <h6 class="alert-heading mb-1 fw-bold">Host Time Out of Sync</h6>
+                <div class="small">
+                    <div class="text-body mb-1">
+                        <span>Host time is different from browser time by <strong class="text-warning-emphasis">@FormatTimeDifference(_timeDifference)</strong>.</span>
+                    </div>
+                    <div class="text-body-secondary d-flex flex-wrap gap-3">
+                        <span>Host: <code class="fw-bold">@_hostTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</code></span>
+                        <span>Browser: <code class="fw-bold">@_browserTime.ToLocalTime().ToString("yyyy-MM-dd HH:mm:ss")</code></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex align-items-center gap-2 ms-auto">
+            <button class="btn btn-warning fw-semibold d-flex align-items-center gap-2 px-3 py-2 shadow-sm"
+                    @onclick="SyncTimeAsync"
+                    disabled="@_isUpdating">
+                @if (_isUpdating)
+                {
+                    <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                    <span>Updating Pi Time...</span>
+                }
+                else
+                {
+                    <ClockIcon Size="16" />
+                    <span>Update Pi Time</span>
+                }
+            </button>
+            <button type="button" class="btn-close" @onclick="Dismiss" aria-label="Close"></button>
+        </div>
+    </div>
+}
+
+@if (!string.IsNullOrEmpty(_statusMessage))
+{
+    <div class="alert @(_isSuccessMessage ? "alert-success border-success" : "alert-danger border-danger") alert-dismissible fade show shadow-sm d-flex align-items-center justify-content-between mb-3" role="alert">
+        <div class="d-flex align-items-center gap-2">
+            @if (_isSuccessMessage)
+            {
+                <ClockIcon Size="18" Class="text-success" />
+            }
+            else
+            {
+                <span class="text-danger fw-bold fs-5">⚠</span>
+            }
+            <div>
+                <strong>@(_isSuccessMessage ? "Time Synchronized:" : "Error:")</strong> @_statusMessage
+            </div>
+        </div>
+        <button type="button" class="btn-close" @onclick="() => _statusMessage = null" aria-label="Close"></button>
+    </div>
+}

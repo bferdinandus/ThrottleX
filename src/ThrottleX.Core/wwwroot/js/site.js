@@ -25,3 +25,10 @@ window.themeManager = {
 };
 
 window.themeManager.initTheme();
+
+// Time Manager for ThrottleX
+window.throttlexTime = {
+    getBrowserTimeIso: function () {
+        return new Date().toISOString();
+    }
+};

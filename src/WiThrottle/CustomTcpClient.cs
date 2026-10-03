@@ -1,6 +1,5 @@
 ﻿using System.Net;
 using System.Net.Sockets;
-using System.Text;
 using System.Threading.Channels;
 using Microsoft.Extensions.Logging;
 
@@ -75,7 +74,7 @@ public class CustomTcpClient : IDisposable
             {
                 _listeningTask.GetAwaiter().GetResult();
             }
-            catch (OperationCanceledException _)
+            catch (OperationCanceledException)
             {
                 // do nothing, this error is expected
             }
