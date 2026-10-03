@@ -1,11 +1,8 @@
-using System.Globalization;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
 using ThrottleX.Core.SystemHealth;
-using Xunit;
 
 namespace Unittests.SystemHealth;
 
@@ -151,7 +148,7 @@ public class SystemHealthTest
     }
 
     [Fact]
-    public void SystemHealthService_InitializesAndUpdatesMetrics()
+    public async Task SystemHealthService_InitializesAndUpdatesMetrics()
     {
         var testMetrics = new SystemMetrics
         {
@@ -162,20 +159,22 @@ public class SystemHealthTest
 
         var mockReader = new MockMetricsReader(testMetrics);
         var options = Options.Create(new SystemHealthOptions { RefreshIntervalSeconds = 1 });
-        var service = new SystemHealthService(mockReader, options, NullLogger<SystemHealthService>.Instance);
+        using var service = new SystemHealthService(mockReader, options, NullLogger<SystemHealthService>.Instance);
 
         Assert.Equal(12.0, service.CurrentMetrics.CpuUsagePercent);
 
-        bool eventFired = false;
-        service.OnMetricsUpdated += () => eventFired = true;
+        var eventFiredTcs = new TaskCompletionSource<bool>(TaskCreationOptions.RunContinuationsAsynchronously);
+        service.OnMetricsUpdated += () => eventFiredTcs.TrySetResult(true);
 
         using var cts = new CancellationTokenSource();
-        var task = service.StartAsync(cts.Token);
+        await service.StartAsync(cts.Token);
 
-        Thread.Sleep(150);
-        cts.Cancel();
+        var completedTask = await Task.WhenAny(eventFiredTcs.Task, Task.Delay(TimeSpan.FromSeconds(5), cts.Token));
+        await cts.CancelAsync();
+        await service.StopAsync(CancellationToken.None);
 
-        Assert.True(eventFired);
+        Assert.Same(eventFiredTcs.Task, completedTask);
+        Assert.True(await eventFiredTcs.Task);
     }
 
     [Fact]
