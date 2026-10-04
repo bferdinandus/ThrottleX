@@ -1,12 +1,20 @@
 using Serilog;
 using ThrottleX.Core;
 using ThrottleX.Core.Extensions;
+using ThrottleX.Core.Services.Common;
 
 CreateHostBuilder(args).Build().Run();
 return;
 
 static IHostBuilder CreateHostBuilder(string[] args) =>
     Host.CreateDefaultBuilder(args)
+        .ConfigureAppConfiguration((context, config) =>
+        {
+            string customConfigPath = AppPathResolver.GetCustomSettingsFilePath(context.HostingEnvironment);
+
+            // Add custom configuration layer
+            config.AddJsonFile(customConfigPath, optional: true, reloadOnChange: true);
+        })
         .UseSerilog(ConfigSerilog)
         .ConfigureWebHostDefaults(webBuilder =>
         {
@@ -17,7 +25,7 @@ static IHostBuilder CreateHostBuilder(string[] args) =>
 
 static void ConfigSerilog(HostBuilderContext context, LoggerConfiguration configuration)
 {
-    var logDir = OperatingSystem.IsLinux() && !context.HostingEnvironment.IsDevelopment() ? "/var/log/throttle-x" : "Logs";
+    string logDir = AppPathResolver.GetLogDirectory(context.HostingEnvironment);
 
     configuration
         .ReadFrom.Configuration(context.Configuration)

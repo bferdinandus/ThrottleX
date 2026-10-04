@@ -35,3 +35,6 @@ msbuild.wrn
 src/ThrottleX.Core/Logs/
 /throttle-x/*
 /*.deb
+
+logs
+data
