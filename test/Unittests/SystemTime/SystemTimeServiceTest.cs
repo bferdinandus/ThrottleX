@@ -1,7 +1,9 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging.Abstractions;
 using Microsoft.Extensions.Options;
+using Moq;
 using ThrottleX.Core;
 using ThrottleX.Core.Services.SystemTime;
 
@@ -17,30 +19,30 @@ public class SystemTimeServiceTest
     [Fact]
     public void GetHostTimeUtc_ReturnsProvidedTime()
     {
-        var expectedTime = new DateTimeOffset(2026, 9, 30, 20, 45, 0, TimeSpan.Zero);
-        var service = new SystemTimeService(
+        DateTimeOffset expectedTime = new(2026, 9, 30, 20, 45, 0, TimeSpan.Zero);
+        SystemTimeService service = new(
             Options.Create(new SystemTimeOptions()),
             NullLogger<SystemTimeService>.Instance,
             new CustomTimeProvider(expectedTime)
         );
 
-        var actual = service.GetHostTimeUtc();
+        DateTimeOffset actual = service.GetHostTimeUtc();
         Assert.Equal(expectedTime, actual);
     }
 
     [Fact]
     public void IsTimeDifferent_WithinThreshold_ReturnsFalse()
     {
-        var hostTime = new DateTimeOffset(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
-        var browserTime = hostTime.AddSeconds(30); // 30s difference, threshold is 60s
+        DateTimeOffset hostTime = new(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
+        DateTimeOffset browserTime = hostTime.AddSeconds(30); // 30s difference, threshold is 60s
 
-        var service = new SystemTimeService(
+        SystemTimeService service = new(
             Options.Create(new SystemTimeOptions { DriftThresholdSeconds = 60 }),
             NullLogger<SystemTimeService>.Instance,
             new CustomTimeProvider(hostTime)
         );
 
-        var isDifferent = service.IsTimeDifferent(browserTime, out var diff);
+        bool isDifferent = service.IsTimeDifferent(browserTime, out TimeSpan diff);
         Assert.False(isDifferent);
         Assert.Equal(TimeSpan.FromSeconds(-30), diff);
     }
@@ -48,16 +50,16 @@ public class SystemTimeServiceTest
     [Fact]
     public void IsTimeDifferent_ExceedingThreshold_ReturnsTrue()
     {
-        var hostTime = new DateTimeOffset(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
-        var browserTime = hostTime.AddSeconds(120); // Host is behind browser by 120s
+        DateTimeOffset hostTime = new(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
+        DateTimeOffset browserTime = hostTime.AddSeconds(120); // Host is behind browser by 120s
 
-        var service = new SystemTimeService(
+        SystemTimeService service = new(
             Options.Create(new SystemTimeOptions { DriftThresholdSeconds = 60 }),
             NullLogger<SystemTimeService>.Instance,
             new CustomTimeProvider(hostTime)
         );
 
-        var isDifferent = service.IsTimeDifferent(browserTime, out var diff);
+        bool isDifferent = service.IsTimeDifferent(browserTime, out TimeSpan diff);
         Assert.True(isDifferent);
         Assert.Equal(TimeSpan.FromSeconds(-120), diff);
     }
@@ -65,16 +67,16 @@ public class SystemTimeServiceTest
     [Fact]
     public void IsTimeDifferent_HostAheadOfBrowser_ReturnsTrue()
     {
-        var hostTime = new DateTimeOffset(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
-        var browserTime = hostTime.AddMinutes(-5); // Host is 5 min ahead of browser
+        DateTimeOffset hostTime = new(2026, 9, 30, 20, 0, 0, TimeSpan.Zero);
+        DateTimeOffset browserTime = hostTime.AddMinutes(-5); // Host is 5 min ahead of browser
 
-        var service = new SystemTimeService(
+        SystemTimeService service = new(
             Options.Create(new SystemTimeOptions { DriftThresholdSeconds = 60 }),
             NullLogger<SystemTimeService>.Instance,
             new CustomTimeProvider(hostTime)
         );
 
-        var isDifferent = service.IsTimeDifferent(browserTime, out var diff);
+        bool isDifferent = service.IsTimeDifferent(browserTime, out TimeSpan diff);
         Assert.True(isDifferent);
         Assert.Equal(TimeSpan.FromMinutes(5), diff);
     }
@@ -82,15 +84,15 @@ public class SystemTimeServiceTest
     [Fact]
     public async Task SetHostTimeAsync_HandlesSystemCommandExecution()
     {
-        var newTime = new DateTimeOffset(2026, 9, 30, 20, 43, 15, TimeSpan.Zero);
+        DateTimeOffset newTime = new(2026, 9, 30, 20, 43, 15, TimeSpan.Zero);
 
-        var service = new SystemTimeService(
+        SystemTimeService service = new(
             Options.Create(new SystemTimeOptions()),
             NullLogger<SystemTimeService>.Instance,
             new CustomTimeProvider(newTime)
         );
 
-        var result = await service.SetHostTimeAsync(newTime);
+        TimeSyncResult result = await service.SetHostTimeAsync(newTime);
         Assert.NotNull(result);
         Assert.NotNull(result.Message);
     }
@@ -98,20 +100,25 @@ public class SystemTimeServiceTest
     [Fact]
     public void Startup_ConfiguresAndResolves_SystemTimeService()
     {
-        var config = new ConfigurationBuilder()
+        IConfigurationRoot config = new ConfigurationBuilder()
             .AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["SystemTime:DriftThresholdSeconds"] = "120"
             })
             .Build();
 
-        var services = new ServiceCollection();
+        Mock<IHostEnvironment> environment = new();
+        environment
+            .SetupGet(e => e.EnvironmentName)
+            .Returns(Environments.Development);
+
+        ServiceCollection services = new();
         services.AddLogging();
-        var startup = new Startup(config);
+        Startup startup = new(config, environment.Object);
         startup.ConfigureServices(services);
 
-        using var provider = services.BuildServiceProvider();
-        var timeService = provider.GetService<ISystemTimeService>();
+        using ServiceProvider provider = services.BuildServiceProvider();
+        ISystemTimeService? timeService = provider.GetService<ISystemTimeService>();
 
         Assert.NotNull(timeService);
         Assert.Equal(TimeSpan.FromSeconds(120), timeService.DriftThreshold);

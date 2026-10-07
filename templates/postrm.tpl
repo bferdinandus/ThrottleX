@@ -15,6 +15,18 @@ case "$1" in
             rm -rf /var/log/{{SUBFOLDER}}
         fi
 
+        # Remove configuration directory
+        if [ -d "/etc/{{SUBFOLDER}}" ]; then
+            echo "Removing configuration directory (/etc/{{SUBFOLDER}})..."
+            rm -rf /etc/{{SUBFOLDER}}
+        fi
+        
+        # Remove runtime state / data directory
+        if [ -d "/var/lib/{{SUBFOLDER}}" ]; then
+            echo "Removing runtime data (/var/lib/{{SUBFOLDER}})..."
+            rm -rf /var/lib/{{SUBFOLDER}}
+        fi
+
         # Remove application directory if still present
         if [ -d "/usr/local/share/{{SUBFOLDER}}" ]; then
             echo "Removing application directory (/usr/local/share/{{SUBFOLDER}})..."

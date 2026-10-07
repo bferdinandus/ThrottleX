@@ -25,9 +25,17 @@ case "$1" in
         # Set appropriate file permissions
         chmod +x /usr/local/share/{{SUBFOLDER}}/{{EXECUTABLE}}
 
+        # Create configuration and log directories
         echo "Creating log directory /var/log/{{SUBFOLDER}}..."
+        mkdir -p /etc/{{SUBFOLDER}}
+        echo "Creating configuration directory /var/log/{{SUBFOLDER}}..."
         mkdir -p /var/log/{{SUBFOLDER}}
-        chown -R throttlex:throttlex /var/log/{{SUBFOLDER}}
+        echo "Creating data directory /var/lib/{{SUBFOLDER}}..."
+        mkdir -p /var/lib/{{SUBFOLDER}}
+        
+        # Grant ownership to the service user
+        chown -R throttlex:throttlex /etc/{{SUBFOLDER}} /var/log/{{SUBFOLDER}} /var/lib/{{SUBFOLDER}}
+        chmod 750 /etc/{{SUBFOLDER}} /var/log/{{SUBFOLDER}} /var/lib/{{SUBFOLDER}}
 
         # Reload systemd manager configuration
         echo "Reloading systemd daemon..."
