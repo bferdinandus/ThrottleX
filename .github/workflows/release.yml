@@ -8,6 +8,7 @@ on:
 
 permissions:
     contents: write
+    pull-requests: write
 
 jobs:
     build-and-release:
@@ -34,42 +35,19 @@ jobs:
             -   name: Run Tests
                 run: dotnet test --configuration Release
 
-            -   name: Update version.txt in repository
-                id: update_version
-                env:
-                    GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+            -   name: Extract Version Info
+                id: version_info
                 run: |
                     RAW_VERSION="${{ github.ref_name }}"
                     VERSION=$(echo "${RAW_VERSION}" | sed 's/^v//')
-                    RELEASE_TAG="${{ github.ref_name }}"
-                    
-                    TARGET_BRANCH="${{ github.event.repository.default_branch }}"
-                    if [ -z "$TARGET_BRANCH" ]; then
-                      TARGET_BRANCH="develop"
-                    fi
-                    
-                    git config user.name "github-actions[bot]"
-                    git config user.email "github-actions[bot]@users.noreply.github.com"
-                    
-                    git fetch origin "${TARGET_BRANCH}"
-                    git checkout -B "${TARGET_BRANCH}" "origin/${TARGET_BRANCH}"
-                    
-                    echo "${VERSION}" > version.txt
-                    
-                    if ! git diff --quiet version.txt; then
-                      git add version.txt
-                      git commit -m "Update version.txt to ${VERSION} [skip ci]"
-                      git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "${TARGET_BRANCH}"
-                    fi
-                    
                     echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-                    echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+                    echo "release_tag=${RAW_VERSION}" >> "$GITHUB_OUTPUT"
 
             -   name: Build Debian Package
                 id: build_package
                 run: |
                     chmod +x ./build-package.sh
-                    ./build-package.sh "${{ steps.update_version.outputs.version }}"
+                    ./build-package.sh "${{ steps.version_info.outputs.version }}"
                     
                     DEB_FILE=$(ls throttle-x-*.deb | head -n 1)
                     echo "deb_file=${DEB_FILE}" >> "$GITHUB_OUTPUT"
@@ -80,7 +58,7 @@ jobs:
                 run: |
                     set -euo pipefail
                     
-                    RELEASE_TAG="${{ steps.update_version.outputs.release_tag }}"
+                    RELEASE_TAG="${{ steps.version_info.outputs.release_tag }}"
                     DEB_FILE="${{ steps.build_package.outputs.deb_file }}"
                     
                     if gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
@@ -90,4 +68,42 @@ jobs:
                       gh release create "$RELEASE_TAG" "$DEB_FILE" \
                         --title "Release ${RELEASE_TAG}" \
                         --generate-notes
+                    fi
+
+            -   name: Create Pull Request to update version.txt
+                env:
+                    GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                run: |
+                    VERSION="${{ steps.version_info.outputs.version }}"
+                    TARGET_BRANCH="${{ github.event.repository.default_branch }}"
+                    [ -z "$TARGET_BRANCH" ] && TARGET_BRANCH="develop"
+                    
+                    BRANCH_NAME="release/v${VERSION}"
+                    
+                    git config user.name "github-actions[bot]"
+                    git config user.email "github-actions[bot]@users.noreply.github.com"
+                    
+                    # Fetch and checkout default branch
+                    git fetch origin "${TARGET_BRANCH}"
+                    git checkout -B "${BRANCH_NAME}" "origin/${TARGET_BRANCH}"
+                    
+                    # Update version file
+                    echo "${VERSION}" > version.txt
+                    
+                    # Commit and push if changed
+                    if ! git diff --quiet version.txt; then
+                      git add version.txt
+                      git commit -m "release: update version.txt to ${VERSION} [skip ci]"
+                      git push origin "${BRANCH_NAME}" --force
+                    
+                      # Create Pull Request if one doesn't exist
+                      if ! gh pr list --head "${BRANCH_NAME}" --base "${TARGET_BRANCH}" --json number -q '.[0].number' | grep -q '^[0-9]'; then
+                        gh pr create \
+                          --base "${TARGET_BRANCH}" \
+                          --head "${BRANCH_NAME}" \
+                          --title "release: update version.txt to ${VERSION}" \
+                          --body "Automated version bump for release \`${{ steps.version_info.outputs.release_tag }}\`."
+                      fi
+                      
+                      gh pr merge "${BRANCH_NAME}" --auto --squash
                     fi
