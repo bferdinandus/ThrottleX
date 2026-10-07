@@ -1,6 +1,8 @@
 # ThrottleX
 **wiThrottle to LocoNet converter with webserver**
 
+[![Build and test](https://github.com/bferdinandus/ThrottleX/actions/workflows/pull-request.yml/badge.svg)](https://github.com/bferdinandus/ThrottleX/actions/workflows/pull-request.yml)
+
 ![ThrottleX Dashboard](.github/images/throttle-x-dashboard.png)
 
 Normal Usage:
