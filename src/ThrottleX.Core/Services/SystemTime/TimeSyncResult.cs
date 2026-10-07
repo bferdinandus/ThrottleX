@@ -1,4 +1,4 @@
-namespace ThrottleX.Core.SystemTime;
+namespace ThrottleX.Core.Services.SystemTime;
 
 public record TimeSyncResult(bool Success, string? Message = null, DateTimeOffset? UpdatedTime = null)
 {

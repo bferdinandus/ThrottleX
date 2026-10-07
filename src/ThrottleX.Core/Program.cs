@@ -1,6 +1,6 @@
 using Serilog;
 using ThrottleX.Core;
-using ThrottleX.Core.Logging;
+using ThrottleX.Core.Extensions;
 
 CreateHostBuilder(args).Build().Run();
 return;

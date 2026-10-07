@@ -2,10 +2,8 @@ using Loconet;
 using Loconet.Msg;
 using Loconet.Msg.Accessor;
 using Shared.LocoTable;
-using Shared.Models;
-using static ThrottleX.Core.Loconet.SlotControl;
 
-namespace ThrottleX.Core.Loconet;
+namespace ThrottleX.Core.Services.Loconet;
 
 public class SlotControl
 {

@@ -1,9 +1,7 @@
-using Microsoft.Extensions.Logging;
 using Shared.LocoTable;
 using Shared.Models;
-using System.Collections;
 
-namespace ThrottleX.Core.LocoTable;
+namespace ThrottleX.Core.Services.LocoTable;
 
 public class LocoTableImpl : ILoconet2Table, IThrottle2Table
 {

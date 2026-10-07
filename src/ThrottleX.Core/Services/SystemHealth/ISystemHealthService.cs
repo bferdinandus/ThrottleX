@@ -1,4 +1,4 @@
-namespace ThrottleX.Core.SystemHealth;
+namespace ThrottleX.Core.Services.SystemHealth;
 
 public interface ISystemHealthService
 {
