@@ -13,7 +13,7 @@ jobs:
     build-and-release:
         name: Build Debian Package & Release
         runs-on: ubuntu-latest
-        
+
         steps:
             -   name: Checkout repository
                 uses: actions/checkout@v7
@@ -36,34 +36,34 @@ jobs:
 
             -   name: Update version.txt in repository
                 id: update_version
-    env:
-        GH_TOKEN: ${{ secrets.PAT_TOKEN }}
-            run: |
-                RAW_VERSION="${{ github.ref_name }}"
-                VERSION=$(echo "${RAW_VERSION}" | sed 's/^v//')
-                RELEASE_TAG="${{ github.ref_name }}"
-                
-                TARGET_BRANCH="${{ github.event.repository.default_branch }}"
-                if [ -z "$TARGET_BRANCH" ]; then
-                  TARGET_BRANCH="develop"
-                fi
-                
-                git config user.name "github-actions[bot]"
-                git config user.email "github-actions[bot]@users.noreply.github.com"
-                
-                git fetch origin "${TARGET_BRANCH}"
-                git checkout -B "${TARGET_BRANCH}" "origin/${TARGET_BRANCH}"
-                
-                echo "${VERSION}" > version.txt
-                
-                if ! git diff --quiet version.txt; then
-                  git add version.txt
-                  git commit -m "Update version.txt to ${VERSION} [skip ci]"
-            git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "${TARGET_BRANCH}"
-            fi
-            
-            echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
-            echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
+                env:
+                    GH_TOKEN: ${{ secrets.PAT_TOKEN }}
+                run: |
+                    RAW_VERSION="${{ github.ref_name }}"
+                    VERSION=$(echo "${RAW_VERSION}" | sed 's/^v//')
+                    RELEASE_TAG="${{ github.ref_name }}"
+                    
+                    TARGET_BRANCH="${{ github.event.repository.default_branch }}"
+                    if [ -z "$TARGET_BRANCH" ]; then
+                      TARGET_BRANCH="develop"
+                    fi
+                    
+                    git config user.name "github-actions[bot]"
+                    git config user.email "github-actions[bot]@users.noreply.github.com"
+                    
+                    git fetch origin "${TARGET_BRANCH}"
+                    git checkout -B "${TARGET_BRANCH}" "origin/${TARGET_BRANCH}"
+                    
+                    echo "${VERSION}" > version.txt
+                    
+                    if ! git diff --quiet version.txt; then
+                      git add version.txt
+                      git commit -m "Update version.txt to ${VERSION} [skip ci]"
+                      git push "https://x-access-token:${GH_TOKEN}@github.com/${{ github.repository }}.git" "${TARGET_BRANCH}"
+                    fi
+                    
+                    echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+                    echo "release_tag=${RELEASE_TAG}" >> "$GITHUB_OUTPUT"
 
             -   name: Build Debian Package
                 id: build_package
