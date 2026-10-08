@@ -1,4 +1,4 @@
-name: Build and test pull requests
+name: Build and Test
 
 on:
     pull_request:
@@ -19,7 +19,7 @@ jobs:
         # Skip if PR is closed but not merged
         if: github.event_name == 'pull_request' || github.event.pull_request.merged == true
         runs-on: ubuntu-latest
-        
+
         steps:
             -   name: Check out repository
                 uses: actions/checkout@v7
