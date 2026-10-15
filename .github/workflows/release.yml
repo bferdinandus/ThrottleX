@@ -93,7 +93,7 @@ jobs:
                     # Commit and push if changed
                     if ! git diff --quiet version.txt; then
                       git add version.txt
-                      git commit -m "release: update version.txt to ${VERSION} [skip ci]"
+                      git commit -m "release: update version.txt to ${VERSION}"
                       git push origin "${BRANCH_NAME}" --force
                     
                       # Create Pull Request if one doesn't exist

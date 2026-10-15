@@ -35,8 +35,8 @@ static void ConfigSerilog(HostBuilderContext context, LoggerConfiguration config
         .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] {Message:lj}{NewLine}{Exception}")
         .WriteTo.File(
             path: Path.Combine(logDir, "ThrottleX-.log"),
-            rollingInterval: RollingInterval.Day,
-            retainedFileCountLimit: 14,
+            rollingInterval: RollingInterval.Hour,
+            retainedFileCountLimit: 100,
             fileSizeLimitBytes: 10 * 1024 * 1024,
             rollOnFileSizeLimit: true,
             outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff}] [{Level:u3}] [{SourceContext}] (Thread {ThreadId}) {Message:lj}{NewLine}{Exception}");
