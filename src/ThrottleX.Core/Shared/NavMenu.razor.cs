@@ -28,9 +28,19 @@ public partial class NavMenu
         _collapseNavMenu = !_collapseNavMenu;
     }
 
+    private void CloseNavMenu()
+    {
+        if (!_collapseNavMenu)
+        {
+            _collapseNavMenu = true;
+        }
+    }
+
     public void Dispose()
     {
         ClientStore.OnStoreChanged -= HandleStoreChanged;
         LoconetService.OnConnectionsChanged -= HandleConnectionsChanged;
+        
+        GC.SuppressFinalize(this);
     }
 }
