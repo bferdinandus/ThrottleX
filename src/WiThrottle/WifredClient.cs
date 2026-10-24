@@ -54,12 +54,16 @@ public partial class WifredClient
 
     public async Task StartProcessingAsync(CancellationToken stoppingToken)
     {
-        bool batteryOk = await UpdateBatteryVoltageAsync();
+        bool batteryInfoAvailable = await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
 
-        if (batteryOk)
+        if (batteryInfoAvailable)
         {
             _ = BatteryVoltageLoopAsync(stoppingToken);
+        }
+        else
+        {
+            _logger.LogWarning("[{uid}] Failed to retrieve battery voltage information from WiFred.", Id);
         }
 
         while (!stoppingToken.IsCancellationRequested && IsConnected)
@@ -112,21 +116,22 @@ public partial class WifredClient
 
     private async Task<bool> UpdateBatteryVoltageAsync()
     {
-        var url = new Uri($"http://{GetIpAddress()}/api/getConfigXML");
+        Uri url = new($"http://{GetIpAddress()}/api/getConfigXML");
 
         try
         {
-            var xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
-            var config = DeserializeConfig(xmlContent, out var configXmlVariant);
+            string xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
+            WiFredConfig? config = DeserializeConfig(xmlContent, out WiFredXmlVariant configXmlVariant);
 
-            if (config != null)
+            if (config == null)
             {
-                ConfigXmlVariant = configXmlVariant;
-                BatteryVoltage = config.BatteryVoltage.Value;
-                _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV (XML variant: {XmlVariant})", Id, BatteryVoltage, ConfigXmlVariant);
-                NotifyClientChanged();
-                return true;
+                return false;
             }
+
+            ConfigXmlVariant = configXmlVariant;
+            BatteryVoltage = config.BatteryVoltage.Value;
+            _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV (XML variant: {XmlVariant})", Id, BatteryVoltage, ConfigXmlVariant);
+            NotifyClientChanged();
 
             return true;
         }
@@ -148,6 +153,11 @@ public partial class WifredClient
             "wiFred" => WiFredXmlVariant.WiFred,
             _ => WiFredXmlVariant.Unknown
         };
+
+        if (configXmlVariant == WiFredXmlVariant.Unknown)
+        {
+            return null;
+        }
 
         XmlSerializer serializer = configXmlVariant == WiFredXmlVariant.WlFred
             ? WlFredConfigSerializer
