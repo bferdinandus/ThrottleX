@@ -144,12 +144,12 @@ public partial class WifredClient
         string rootName = ReadRootName(xmlContent);
         configXmlVariant = rootName switch
         {
-            "WLFRED" => WiFredXmlVariant.Wlfred,
+            "WLFRED" => WiFredXmlVariant.WlFred,
             "wiFred" => WiFredXmlVariant.WiFred,
             _ => WiFredXmlVariant.Unknown
         };
 
-        XmlSerializer serializer = configXmlVariant == WiFredXmlVariant.Wlfred
+        XmlSerializer serializer = configXmlVariant == WiFredXmlVariant.WlFred
             ? WlFredConfigSerializer
             : WiFredConfigSerializer;
         

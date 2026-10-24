@@ -4,5 +4,5 @@ public enum WiFredXmlVariant
 {
     Unknown,
     WiFred,
-    Wlfred
+    WlFred
 }

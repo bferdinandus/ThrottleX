@@ -7,7 +7,7 @@ namespace Unittests;
 public class WiFredConfigTest
 {
     [Theory]
-    [InlineData("WLFRED", WiFredXmlVariant.Wlfred)]
+    [InlineData("WLFRED", WiFredXmlVariant.WlFred)]
     [InlineData("wiFred", WiFredXmlVariant.WiFred)]
     public void TestAlternateRootName(string rootName, WiFredXmlVariant expectedVariant)
     {
@@ -15,12 +15,12 @@ public class WiFredConfigTest
         var config = WifredClient.DeserializeConfig(xmlContent, out var detectedVariant);
 
         Assert.NotNull(config);
-        Assert.Equal(100, config!.BatteryVoltage.Value);
+        Assert.Equal(100, config.BatteryVoltage.Value);
         Assert.Equal(expectedVariant, detectedVariant);
     }
 
     [Fact]
-    public void TestActualWlfredXml()
+    public void TestActualWlFredXml()
     {
         var xmlContent = """
                          <?XML version="1.0" encoding="UTF-8"?>
@@ -63,8 +63,8 @@ public class WiFredConfigTest
         var config = WifredClient.DeserializeConfig(xmlContent, out var detectedVariant);
 
         Assert.NotNull(config);
-        Assert.Equal(WiFredXmlVariant.Wlfred, detectedVariant);
-        Assert.Equal(4109, config!.BatteryVoltage.Value);
+        Assert.Equal(WiFredXmlVariant.WlFred, detectedVariant);
+        Assert.Equal(4109, config.BatteryVoltage.Value);
         Assert.Equal("WLFRED-Felix", config.ThrottleName.Value);
         Assert.Single(config.Locos);
         Assert.Equal("BurgamStausee", config.WiFi.SSID.Value);
@@ -95,6 +95,6 @@ public class WiFredConfigTest
 
         var config = (WiFredConfig?)serializer.Deserialize(stringReader);
         Assert.NotNull(config);
-        Assert.Equal(100, config!.BatteryVoltage.Value);
+        Assert.Equal(100, config.BatteryVoltage.Value);
     }
 }
