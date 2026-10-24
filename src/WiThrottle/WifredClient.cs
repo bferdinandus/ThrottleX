@@ -49,10 +49,13 @@ public partial class WifredClient
 
     public async Task StartProcessingAsync(CancellationToken stoppingToken)
     {
-        await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
 
-        _ = BatteryVoltageLoopAsync(stoppingToken);
+        bool initialUpdateSuccess = await UpdateBatteryVoltageAsync();
+        if (initialUpdateSuccess)
+        {
+            _ = BatteryVoltageLoopAsync(stoppingToken);
+        }
 
         while (!stoppingToken.IsCancellationRequested && IsConnected)
         {
@@ -102,7 +105,7 @@ public partial class WifredClient
         NotifyClientChanged();
     }
 
-    private async Task UpdateBatteryVoltageAsync()
+    private async Task<bool> UpdateBatteryVoltageAsync()
     {
         var url = new Uri($"http://{GetIpAddress()}/api/getConfigXML");
 
@@ -122,11 +125,15 @@ public partial class WifredClient
                 _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV", Id, BatteryVoltage);
                 NotifyClientChanged();
             }
+
+            return true;
         }
         catch (Exception ex)
         {
             _logger.LogWarning(ex, "[{uid}] Failed to update battery voltage from {Url}", Id, url);
         }
+
+        return false;
     }
 
     [GeneratedRegex("""(<Key\b[^>]*?\bvalue\s*=\s*")([^"]*)(")""", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
@@ -140,7 +147,7 @@ public partial class WifredClient
         }
 
         // Escape raw '<' characters only inside <Key value="...">.
-        xmlContent = KeyAttributeRegex().Replace( xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
+        xmlContent = KeyAttributeRegex().Replace(xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
 
         return xmlContent;
     }
