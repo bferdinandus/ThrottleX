@@ -1,6 +1,7 @@
-﻿using System.Net.Sockets;
-using System.Security;
+﻿using System.Security;
 using System.Text.RegularExpressions;
+using System.Xml;
+using System.Xml.Serialization;
 using Microsoft.Extensions.Logging;
 using Shared;
 using Shared.LocoTable;
@@ -11,12 +12,16 @@ namespace WiThrottle;
 
 public partial class WifredClient
 {
+    private static readonly XmlSerializer WiFredConfigSerializer = new(typeof(WiFredConfig));
+    private static readonly XmlSerializer WlFredConfigSerializer = new(typeof(WiFredConfig), new XmlRootAttribute("WLFRED"));
+
     private readonly ILogger _logger;
     public string Id { get; private set; }
     public string Name { get; private set; }
     public DateTime? ConnectedAt { get; private set; }
     public DateTime LastMessage { get; private set; }
     public int BatteryVoltage { get; private set; }
+    public WiFredXmlVariant ConfigXmlVariant { get; private set; }
 
     public bool IsConnected => _customTcpClient?.IsConnected ?? false;
 
@@ -49,10 +54,10 @@ public partial class WifredClient
 
     public async Task StartProcessingAsync(CancellationToken stoppingToken)
     {
+        bool batteryOk = await UpdateBatteryVoltageAsync();
         _stoppingToken = stoppingToken;
 
-        bool initialUpdateSuccess = await UpdateBatteryVoltageAsync();
-        if (initialUpdateSuccess)
+        if (batteryOk)
         {
             _ = BatteryVoltageLoopAsync(stoppingToken);
         }
@@ -112,18 +117,15 @@ public partial class WifredClient
         try
         {
             var xmlContent = await _httpClient.GetStringAsync(url, _stoppingToken);
-            xmlContent = NormalizeXmlContent(xmlContent);
-
-            var serializer = new System.Xml.Serialization.XmlSerializer(typeof(WiFredConfig));
-            using var stringReader = new StringReader(xmlContent);
-
-            var config = (WiFredConfig?)serializer.Deserialize(stringReader);
+            var config = DeserializeConfig(xmlContent, out var configXmlVariant);
 
             if (config != null)
             {
+                ConfigXmlVariant = configXmlVariant;
                 BatteryVoltage = config.BatteryVoltage.Value;
-                _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV", Id, BatteryVoltage);
+                _logger.LogInformation("[{uid}] Battery voltage updated: {BatteryVoltage}mV (XML variant: {XmlVariant})", Id, BatteryVoltage, ConfigXmlVariant);
                 NotifyClientChanged();
+                return true;
             }
 
             return true;
@@ -134,6 +136,26 @@ public partial class WifredClient
         }
 
         return false;
+    }
+
+    public static WiFredConfig? DeserializeConfig(string xmlContent, out WiFredXmlVariant configXmlVariant)
+    {
+        xmlContent = NormalizeXmlContent(xmlContent);
+        string rootName = ReadRootName(xmlContent);
+        configXmlVariant = rootName switch
+        {
+            "WLFRED" => WiFredXmlVariant.Wlfred,
+            "wiFred" => WiFredXmlVariant.WiFred,
+            _ => WiFredXmlVariant.Unknown
+        };
+
+        XmlSerializer serializer = configXmlVariant == WiFredXmlVariant.Wlfred
+            ? WlFredConfigSerializer
+            : WiFredConfigSerializer;
+        
+        using StringReader stringReader = new(xmlContent);
+        
+        return (WiFredConfig?)serializer.Deserialize(stringReader);
     }
 
     [GeneratedRegex("""(<Key\b[^>]*?\bvalue\s*=\s*")([^"]*)(")""", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
@@ -150,6 +172,14 @@ public partial class WifredClient
         xmlContent = KeyAttributeRegex().Replace(xmlContent, match => $"{match.Groups[1].Value}{SecurityElement.Escape(match.Groups[2].Value)}{match.Groups[3].Value}");
 
         return xmlContent;
+    }
+
+    private static string ReadRootName(string xmlContent)
+    {
+        using XmlReader xmlReader = XmlReader.Create(new StringReader(xmlContent));
+        xmlReader.MoveToContent();
+        
+        return xmlReader.LocalName;
     }
 
     public void Disconnect()
